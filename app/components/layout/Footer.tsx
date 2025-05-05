@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { FC } from 'react';
 
@@ -12,7 +14,7 @@ const Footer: FC = () => {
               A modern, web-based platform designed to give developers, teams, and organizations a centralized dashboard to manage, automate, and optimize their entire GitHub workflow.
             </p>
           </div>
-          
+
           <div>
             <h4 className="text-white font-semibold mb-4">Features</h4>
             <ul className="space-y-2 text-sm">
@@ -38,7 +40,7 @@ const Footer: FC = () => {
               </li>
             </ul>
           </div>
-          
+
           <div>
             <h4 className="text-white font-semibold mb-4">Resources</h4>
             <ul className="space-y-2 text-sm">
@@ -59,7 +61,7 @@ const Footer: FC = () => {
               </li>
             </ul>
           </div>
-          
+
           <div>
             <h4 className="text-white font-semibold mb-4">Connect</h4>
             <ul className="space-y-2 text-sm">
@@ -81,7 +83,7 @@ const Footer: FC = () => {
             </ul>
           </div>
         </div>
-        
+
         <div className="border-t border-gray-800 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm">
             &copy; {new Date().getFullYear()} GitHub Nexus. All rights reserved.

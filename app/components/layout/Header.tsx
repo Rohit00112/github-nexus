@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { FC } from 'react';
@@ -9,10 +11,10 @@ const Header: FC = () => {
         <div className="flex items-center space-x-2">
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 relative">
-              <Image 
-                src="/logo.svg" 
-                alt="GitHub Nexus Logo" 
-                fill 
+              <Image
+                src="/logo.svg"
+                alt="GitHub Nexus Logo"
+                fill
                 className="object-contain"
                 priority
               />
@@ -20,7 +22,7 @@ const Header: FC = () => {
             <span className="text-xl font-bold">GitHub Nexus</span>
           </Link>
         </div>
-        
+
         <nav className="hidden md:flex items-center space-x-6">
           <Link href="/repositories" className="hover:text-gray-300 transition-colors">
             Repositories
@@ -38,7 +40,7 @@ const Header: FC = () => {
             Insights
           </Link>
         </nav>
-        
+
         <div className="flex items-center space-x-4">
           <button className="p-2 rounded-full hover:bg-gray-700 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

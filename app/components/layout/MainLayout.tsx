@@ -1,3 +1,5 @@
+"use client";
+
 import { FC, ReactNode, useState } from 'react';
 import Header from './Header';
 import Footer from './Footer';
@@ -9,11 +11,11 @@ interface MainLayoutProps {
 
 const MainLayout: FC<MainLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-  
+
   const closeSidebar = () => {
     setSidebarOpen(false);
   };
@@ -21,10 +23,10 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      
+
       <div className="flex flex-1">
         <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
-        
+
         <main className="flex-1 p-4 md:p-6 bg-gray-100 dark:bg-gray-900">
           {/* Mobile menu button */}
           <button
@@ -35,13 +37,13 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          
+
           <div className="container mx-auto">
             {children}
           </div>
         </main>
       </div>
-      
+
       <Footer />
     </div>
   );

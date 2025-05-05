@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { FC } from 'react';
 
@@ -11,21 +13,21 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
     <>
       {/* Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={onClose}
         ></div>
       )}
-      
+
       {/* Sidebar */}
-      <aside 
+      <aside
         className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 md:static md:z-0`}
       >
         <div className="p-4 border-b border-gray-700">
           <h2 className="text-xl font-bold">GitHub Nexus</h2>
-          <button 
+          <button
             className="absolute top-4 right-4 md:hidden"
             onClick={onClose}
           >
@@ -34,12 +36,12 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
             </svg>
           </button>
         </div>
-        
+
         <nav className="p-4">
           <ul className="space-y-2">
             <li>
-              <Link 
-                href="/dashboard" 
+              <Link
+                href="/dashboard"
                 className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -49,8 +51,8 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
               </Link>
             </li>
             <li>
-              <Link 
-                href="/repositories" 
+              <Link
+                href="/repositories"
                 className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -60,8 +62,8 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
               </Link>
             </li>
             <li>
-              <Link 
-                href="/issues" 
+              <Link
+                href="/issues"
                 className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -71,8 +73,8 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
               </Link>
             </li>
             <li>
-              <Link 
-                href="/pull-requests" 
+              <Link
+                href="/pull-requests"
                 className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -82,8 +84,8 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
               </Link>
             </li>
             <li>
-              <Link 
-                href="/actions" 
+              <Link
+                href="/actions"
                 className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -93,8 +95,8 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
               </Link>
             </li>
             <li>
-              <Link 
-                href="/insights" 
+              <Link
+                href="/insights"
                 className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -104,8 +106,8 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
               </Link>
             </li>
             <li>
-              <Link 
-                href="/settings" 
+              <Link
+                href="/settings"
                 className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
