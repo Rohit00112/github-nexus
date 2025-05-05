@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "GitHub Nexus",
   description: "A Web-Based Full Workflow Automation Hub Using GitHub API",
+  icons: {
+    icon: '/logo.svg',
+  },
 };
 
 export default function RootLayout({
