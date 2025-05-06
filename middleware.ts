@@ -50,8 +50,8 @@ export function middleware(request: NextRequest) {
       !pathname.startsWith('/_next/') &&
       !pathname.includes('favicon.ico')) {
 
-    // Redirect to the 404 page in the Pages Router
-    return NextResponse.rewrite(new URL('/404', request.url));
+    // Use the App Router's not-found page
+    return NextResponse.rewrite(new URL('/not-found', request.url));
   }
 
   return NextResponse.next();
@@ -60,7 +60,7 @@ export function middleware(request: NextRequest) {
 // Match all routes except static assets, not-found pages, auth pages, and auth callback
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found|auth/error|auth/signout).*)',
+    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found|_not-found|auth/error|auth/signout).*)',
     '/api/auth/:path*'
   ],
 };

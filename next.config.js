@@ -59,17 +59,20 @@ const nextConfig = {
   // Disable compression
   compress: false,
   // Custom 404 page
+  // Configure custom routes
   async rewrites() {
-    return [
-      {
-        source: '/_not-found',
-        destination: '/404',
-      },
-    ];
+    return {
+      beforeFiles: [
+        // Handle not-found routes
+        {
+          source: '/_not-found',
+          destination: '/not-found',
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
   },
-
-  // Disable static generation for specific pages
-  unstable_excludeFiles: ['**/pages/auth/signout.js'],
 };
 
 module.exports = nextConfig;
