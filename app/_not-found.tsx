@@ -8,7 +8,7 @@ export default function NotFound() {
       <p className="mb-8 max-w-md">
         The page you are looking for doesn't exist or has been moved.
       </p>
-      <Link
+      <Link 
         href="/"
         className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
       >
