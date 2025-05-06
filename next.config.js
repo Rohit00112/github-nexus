@@ -40,28 +40,25 @@ const nextConfig = {
     // Disable optimizations that might cause issues
     optimizeCss: false
   },
-  // External packages configuration
-  serverExternalPackages: [],
-  // Skip prerendering of problematic pages
-  skipTrailingSlashRedirect: true,
+  // Explicitly disable prerendering for not-found pages
+  skipPrerender: true,
+  // Disable static generation for 404 pages
+  unstable_skipTrailingSlashRedirect: true,
+  // Skip middleware URL normalization
   skipMiddlewareUrlNormalize: true,
-  // Disable static optimization for 404 pages
+  // Exclude default moment locales
   excludeDefaultMomentLocales: true,
-  // Disable static generation for specific paths
+  // Page extensions
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
-  // Disable automatic static optimization
-  disableStaticImages: true,
-  // Disable static generation for 404 pages
+  // Disable trailing slash
   trailingSlash: false,
-  // Disable static generation for 404 pages
+  // Disable React strict mode
   reactStrictMode: false,
-  // Disable static generation for 404 pages
-  swcMinify: false,
-  // Disable static generation for 404 pages
+  // Disable powered by header
   poweredByHeader: false,
-  // Disable static generation for 404 pages
+  // Disable etags generation
   generateEtags: false,
-  // Disable static generation for 404 pages
+  // Disable compression
   compress: false,
 };
 

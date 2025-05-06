@@ -115,13 +115,11 @@ export function middleware(request: NextRequest) {
     pathname.includes('favicon.ico')
   );
 
-  // If it's not a valid path or it's explicitly a 404/not-found path, return 404
-  if (!isValidPath ||
-      pathname === '/_not-found' ||
-      pathname.includes('/_not-found') ||
-      pathname.includes('not-found') ||
-      pathname === '/404' ||
-      pathname.includes('/404')) {
+  // If it's not a valid path, return 404
+  // But don't intercept the actual not-found page or 404 page
+  if (!isValidPath &&
+      !pathname.startsWith('/_next/') &&
+      !pathname.includes('favicon.ico')) {
 
     // Create a simple HTML response for 404
     return new NextResponse(
@@ -201,10 +199,10 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Match all routes except static assets and auth callback
+// Match all routes except static assets, not-found pages, and auth callback
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found).*)',
     '/api/auth/:path*'
   ],
 };
