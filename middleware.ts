@@ -11,6 +11,7 @@ export function middleware(request: NextRequest) {
 
   // Handle prerendering for client-side pages that require authentication
   if (
+    pathname === '/' ||
     pathname === '/issues' ||
     pathname === '/pull-requests' ||
     pathname === '/repositories' ||
