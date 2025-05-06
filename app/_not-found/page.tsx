@@ -1,4 +1,10 @@
+"use client";
+
 import Link from 'next/link';
+
+// Mark this page as dynamically rendered
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export default function NotFoundPage() {
   return (

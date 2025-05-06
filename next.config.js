@@ -88,6 +88,14 @@ const nextConfig = {
           source: '/',
           destination: '/',
         },
+        {
+          source: '/not-found',
+          destination: '/not-found',
+        },
+        {
+          source: '/_not-found',
+          destination: '/_not-found',
+        },
       ],
       fallback: [],
     };
