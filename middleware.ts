@@ -66,11 +66,23 @@ export function middleware(request: NextRequest) {
     pathname.includes('favicon.ico')
   );
 
-  // If it's not a valid path, redirect to the 404 page
-  // But don't intercept the actual not-found page or 404 page
+  // If it's not a valid path, show the not-found page
+  // But don't intercept the actual not-found page or static assets
   if (!isValidPath &&
       !pathname.startsWith('/_next/') &&
-      !pathname.includes('favicon.ico')) {
+      !pathname.includes('favicon.ico') &&
+      pathname !== '/not-found') {
+
+    // For prerendering, return a minimal response
+    const isPrerendering = process.env.NODE_ENV === 'production' && !request.headers.get('x-middleware-invoke');
+    if (isPrerendering) {
+      return new NextResponse(null, {
+        status: 200,
+        headers: {
+          'content-type': 'text/html',
+        },
+      });
+    }
 
     // Use the App Router's not-found page
     return NextResponse.rewrite(new URL('/not-found', request.url));
@@ -82,7 +94,7 @@ export function middleware(request: NextRequest) {
 // Match all routes including client-side pages that need special handling
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found|_not-found|not-found/page|auth/error|auth/signout|$).*)',
+    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|auth/error|auth/signout|$).*)',
     '/issues',
     '/pull-requests',
     '/repositories',
