@@ -47,6 +47,22 @@ const nextConfig = {
   skipMiddlewareUrlNormalize: true,
   // Disable static optimization for 404 pages
   excludeDefaultMomentLocales: true,
+  // Disable static generation for specific paths
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
+  // Disable automatic static optimization
+  disableStaticImages: true,
+  // Disable static generation for 404 pages
+  trailingSlash: false,
+  // Disable static generation for 404 pages
+  reactStrictMode: false,
+  // Disable static generation for 404 pages
+  swcMinify: false,
+  // Disable static generation for 404 pages
+  poweredByHeader: false,
+  // Disable static generation for 404 pages
+  generateEtags: false,
+  // Disable static generation for 404 pages
+  compress: false,
 };
 
 module.exports = nextConfig;
