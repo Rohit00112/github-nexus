@@ -16,9 +16,9 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/api/auth/signin/github', request.url));
     }
 
-    // For signout, redirect to API signout
+    // For signout, use the Pages Router version
     if (pathname === '/auth/signout' || pathname.startsWith('/auth/signout')) {
-      return NextResponse.redirect(new URL('/api/auth/signout', request.url));
+      return NextResponse.rewrite(new URL('/auth/signout', request.url));
     }
 
     // For auth error, let the Pages Router handle it

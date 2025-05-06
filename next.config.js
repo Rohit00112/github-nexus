@@ -38,9 +38,7 @@ const nextConfig = {
     // Disable all experimental features
     ppr: false,
     // Disable optimizations that might cause issues
-    optimizeCss: false,
-    // Disable static generation for not-found pages
-    missingSuspenseWithCSRBailout: false
+    optimizeCss: false
   },
   // Disable static generation for 404 pages
   skipTrailingSlashRedirect: true,
@@ -66,6 +64,10 @@ const nextConfig = {
       {
         source: '/_not-found',
         destination: '/404',
+      },
+      {
+        source: '/auth/signout',
+        destination: '/auth/signout',
       },
     ];
   },
