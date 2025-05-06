@@ -36,13 +36,17 @@ const nextConfig = {
   // Disable all experimental features
   experimental: {
     // Disable all experimental features
-    ppr: false
+    ppr: false,
+    // Disable optimizations that might cause issues
+    optimizeCss: false
   },
   // External packages configuration
   serverExternalPackages: [],
   // Skip prerendering of problematic pages
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
+  // Disable static optimization for 404 pages
+  excludeDefaultMomentLocales: true,
 };
 
 module.exports = nextConfig;
