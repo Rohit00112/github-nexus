@@ -4,11 +4,16 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Special handling for auth routes to prevent prerendering issues
+  if (pathname === '/auth/signin' || pathname.startsWith('/auth/signin')) {
+    // Redirect to the API auth endpoint which will handle the GitHub OAuth flow
+    return NextResponse.redirect(new URL('/api/auth/signin/github', request.url));
+  }
+
   // Check if the path exists in our application
   // This is a simplified check - in a real app, you'd have a more comprehensive check
   const validPaths = [
     '/',
-    '/auth/signin',
     '/auth/signout',
     '/auth/error',
     '/issues',
@@ -112,7 +117,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Match all routes
+// Match all routes except static assets and auth callback
 export const config = {
-  matcher: ['/((?!api/auth/callback|_next/static|_next/image).*)'],
+  matcher: ['/((?!api/auth/callback|_next/static|_next/image|favicon.ico).*)'],
 };
