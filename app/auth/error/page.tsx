@@ -3,13 +3,14 @@
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function AuthError() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
 
   let errorMessage = "An error occurred during authentication.";
-  
+
   if (error === "AccessDenied") {
     errorMessage = "You do not have permission to access this resource.";
   } else if (error === "Configuration") {
@@ -49,5 +50,23 @@ export default function AuthError() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthError() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mt-4 text-gray-900 dark:text-white">
+              Loading...
+            </h1>
+          </div>
+        </div>
+      </div>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   );
 }
