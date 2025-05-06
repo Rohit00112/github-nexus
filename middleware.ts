@@ -102,6 +102,19 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // For /not-found and /_not-found, during prerender, return minimal response
+  if ((pathname === '/not-found' || pathname === '/_not-found')) {
+    const isPrerendering = process.env.NODE_ENV === 'production' && !request.headers.get('x-middleware-invoke');
+    if (isPrerendering) {
+      return new NextResponse(null, {
+        status: 200,
+        headers: {
+          'content-type': 'text/html',
+        },
+      });
+    }
+  }
+
   return NextResponse.next();
 }
 
