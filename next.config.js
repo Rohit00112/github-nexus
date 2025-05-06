@@ -40,6 +40,7 @@ const nextConfig = {
     // Disable optimizations that might cause issues
     optimizeCss: false
   },
+
   // Disable static generation for 404 pages
   skipTrailingSlashRedirect: true,
   // Skip middleware URL normalization
@@ -69,7 +70,13 @@ const nextConfig = {
           destination: '/not-found',
         },
       ],
-      afterFiles: [],
+      afterFiles: [
+        // Handle dynamic pages that can't be prerendered
+        {
+          source: '/issues',
+          destination: '/issues',
+        },
+      ],
       fallback: [],
     };
   },

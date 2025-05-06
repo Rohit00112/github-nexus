@@ -9,11 +9,15 @@ import { GitHubIssue, GitHubRepository } from "../types/github";
 import IssueCard from "../components/issues/IssueCard";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 
+// Mark this page as dynamically rendered
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export default function IssuesPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
-  
+
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [issues, setIssues] = useState<GitHubIssue[]>([]);
@@ -21,25 +25,25 @@ export default function IssuesPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterState, setFilterState] = useState<"all" | "open" | "closed">("all");
-  
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/auth/signin");
     }
   }, [authLoading, isAuthenticated, router]);
-  
+
   useEffect(() => {
     async function fetchRepositories() {
       if (githubService && !githubLoading) {
         try {
           setIsLoading(true);
           setError(null);
-          
+
           const user = await githubService.getCurrentUser();
           const repos = await githubService.getUserRepositories(user.login, 1, 100);
-          
+
           setRepositories(repos);
-          
+
           // Select the first repository by default
           if (repos.length > 0 && !selectedRepo) {
             setSelectedRepo(repos[0].full_name);
@@ -52,20 +56,20 @@ export default function IssuesPage() {
         }
       }
     }
-    
+
     fetchRepositories();
   }, [githubService, githubLoading, selectedRepo]);
-  
+
   useEffect(() => {
     async function fetchIssues() {
       if (githubService && selectedRepo) {
         try {
           setIsLoading(true);
           setError(null);
-          
+
           const [owner, repo] = selectedRepo.split('/');
           const issuesData = await githubService.getIssues(owner, repo, 1, 100);
-          
+
           setIssues(issuesData);
         } catch (err) {
           console.error("Error fetching issues:", err);
@@ -75,19 +79,19 @@ export default function IssuesPage() {
         }
       }
     }
-    
+
     if (selectedRepo) {
       fetchIssues();
     }
   }, [githubService, selectedRepo]);
-  
+
   const filteredIssues = issues
-    .filter(issue => 
+    .filter(issue =>
       (filterState === "all" || issue.state === filterState) &&
       (issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
        (issue.body && issue.body.toLowerCase().includes(searchQuery.toLowerCase())))
     );
-  
+
   if (authLoading || githubLoading) {
     return (
       <MainLayout>
@@ -97,14 +101,14 @@ export default function IssuesPage() {
       </MainLayout>
     );
   }
-  
+
   return (
     <MainLayout>
       <div className="py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Issues</h1>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="md:w-1/3">
@@ -125,7 +129,7 @@ export default function IssuesPage() {
                 ))}
               </select>
             </div>
-            
+
             <div className="md:w-1/3">
               <label htmlFor="issue-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Search issues
@@ -144,7 +148,7 @@ export default function IssuesPage() {
                 </svg>
               </div>
             </div>
-            
+
             <div className="md:w-1/3">
               <label htmlFor="state-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 State
@@ -162,7 +166,7 @@ export default function IssuesPage() {
             </div>
           </div>
         </div>
-        
+
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <LoadingSpinner size="medium" />
@@ -182,8 +186,8 @@ export default function IssuesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
             <h3 className="text-xl font-medium mb-2">No issues found</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {searchQuery || filterState !== "all" 
-                ? "No issues match your search criteria." 
+              {searchQuery || filterState !== "all"
+                ? "No issues match your search criteria."
                 : "This repository doesn't have any issues yet."}
             </p>
           </div>
@@ -192,9 +196,9 @@ export default function IssuesPage() {
             {filteredIssues.map((issue) => {
               const [owner, repo] = selectedRepo.split('/');
               return (
-                <IssueCard 
-                  key={issue.id} 
-                  issue={issue} 
+                <IssueCard
+                  key={issue.id}
+                  issue={issue}
                   repoOwner={owner}
                   repoName={repo}
                 />
