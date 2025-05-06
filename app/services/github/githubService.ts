@@ -56,6 +56,66 @@ export class GitHubService {
     return data;
   }
 
+  async getIssue(owner: string, repo: string, issue_number: number) {
+    const { data } = await this.octokit.rest.issues.get({
+      owner,
+      repo,
+      issue_number,
+    });
+    return data;
+  }
+
+  async getIssueComments(owner: string, repo: string, issue_number: number, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.issues.listComments({
+      owner,
+      repo,
+      issue_number,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async createIssueComment(owner: string, repo: string, issue_number: number, body: string) {
+    const { data } = await this.octokit.rest.issues.createComment({
+      owner,
+      repo,
+      issue_number,
+      body,
+    });
+    return data;
+  }
+
+  async updateIssue(owner: string, repo: string, issue_number: number, options: {
+    title?: string;
+    body?: string;
+    state?: "open" | "closed";
+    assignees?: string[];
+    labels?: string[];
+  }) {
+    const { data } = await this.octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number,
+      ...options,
+    });
+    return data;
+  }
+
+  async createIssue(owner: string, repo: string, options: {
+    title: string;
+    body?: string;
+    assignees?: string[];
+    labels?: string[];
+  }) {
+    const { data } = await this.octokit.rest.issues.create({
+      owner,
+      repo,
+      ...options,
+    });
+    return data;
+  }
+
   // Pull requests methods
   async getPullRequests(owner: string, repo: string, page = 1, perPage = 10) {
     const { data } = await this.octokit.rest.pulls.list({
