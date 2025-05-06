@@ -68,21 +68,101 @@ GitHub Nexus is built entirely on top of the GitHub REST and GraphQL APIs, offer
 - **Database**: PostgreSQL or MongoDB (optional – for caching or persistent settings)
 - **DevOps**: Docker, GitHub Actions (CI for Nexus itself)
 
+## Implemented Features
+
+### 🐞 Issue & Project Tracking
+- View and filter issues across repositories
+- Detailed issue view with comments and status updates
+- Create, edit, and close issues
+- Add and remove labels, assignees, and milestones
+- Comment on issues with markdown support
+
+### 🔀 Pull Request Management
+- Browse and filter pull requests
+- Detailed PR view with commit history and file changes
+- Review and merge pull requests
+- Add comments and review requests
+- Track CI/CD status and merge conflicts
+
+### ⚙️ GitHub Actions & Workflows
+- View and manage GitHub Actions workflows
+- Detailed workflow run information with job and step status
+- Trigger workflow runs manually
+- Cancel running workflows
+- View workflow logs and artifacts
+
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18.x or higher
+- GitHub account with personal access token
 
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/Rohit00112/github-nexus.git
+cd github-nexus
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create a `.env.local` file in the root directory with the following variables:
+```
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+```
+
+4. Run the development server:
+```bash
+npm run dev
+```
+
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### Authentication
+
+GitHub Nexus uses GitHub OAuth for authentication. When you first access the application, you'll be prompted to sign in with your GitHub account and authorize the application to access your repositories, issues, pull requests, and workflows.
+
+## Deployment
+
+### Deploying to Vercel
+
+The easiest way to deploy GitHub Nexus is to use the [Vercel Platform](https://vercel.com):
+
+1. Push your code to a GitHub repository
+2. Import the project to Vercel
+3. Add the environment variables in the Vercel dashboard
+4. Deploy
+
+### Docker Deployment
+
+You can also deploy GitHub Nexus using Docker:
+
+1. Build the Docker image:
+```bash
+docker build -t github-nexus .
+```
+
+2. Run the container:
+```bash
+docker run -p 3000:3000 -e GITHUB_CLIENT_ID=your_client_id -e GITHUB_CLIENT_SECRET=your_client_secret -e NEXTAUTH_SECRET=your_secret -e NEXTAUTH_URL=your_url github-nexus
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
