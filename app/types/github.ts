@@ -89,6 +89,22 @@ export interface GitHubIssue {
   comments: number;
 }
 
+// GitHub Comment Type
+export interface GitHubComment {
+  id: number;
+  node_id: string;
+  url: string;
+  html_url: string;
+  body: string;
+  user: {
+    login: string;
+    id: number;
+    avatar_url: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
 // GitHub Pull Request Type
 export interface GitHubPullRequest {
   id: number;
@@ -118,7 +134,7 @@ export interface GitHubPullRequest {
   additions: number;
   deletions: number;
   changed_files: number;
-  head?: {
+  head: {
     ref: string;
     sha: string;
     repo: {
@@ -127,7 +143,7 @@ export interface GitHubPullRequest {
       full_name: string;
     };
   };
-  base?: {
+  base: {
     ref: string;
     sha: string;
     repo: {
