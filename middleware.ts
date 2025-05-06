@@ -55,6 +55,8 @@ export function middleware(request: NextRequest) {
     '/issues',
     '/pull-requests',
     '/repositories',
+    '/not-found',
+    '/_not-found',
   ];
 
   // Check if the path starts with any valid path
@@ -71,7 +73,8 @@ export function middleware(request: NextRequest) {
   if (!isValidPath &&
       !pathname.startsWith('/_next/') &&
       !pathname.includes('favicon.ico') &&
-      pathname !== '/not-found') {
+      pathname !== '/not-found' &&
+      pathname !== '/_not-found') {
 
     // For prerendering, return a minimal response
     const isPrerendering = process.env.NODE_ENV === 'production' && !request.headers.get('x-middleware-invoke');
