@@ -10,12 +10,14 @@ import { GitHubWorkflow, GitHubWorkflowRun } from "../../../../../../types/githu
 import WorkflowRunCard from "../../../../../../components/actions/WorkflowRunCard";
 import LoadingSpinner from "../../../../../../components/ui/LoadingSpinner";
 
+type Params = {
+  owner: string;
+  repo: string;
+  workflow: string;
+};
+
 interface WorkflowDetailPageProps {
-  params: {
-    owner: string;
-    repo: string;
-    workflow: string;
-  };
+  params: Params;
 }
 
 export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) {
@@ -23,11 +25,11 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
   const ownerName = Array.isArray(params.owner) ? params.owner[0] : params.owner;
   const repoName = Array.isArray(params.repo) ? params.repo[0] : params.repo;
   const workflowId = Array.isArray(params.workflow) ? params.workflow[0] : params.workflow;
-  
+
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
-  
+
   const [workflow, setWorkflow] = useState<GitHubWorkflow | null>(null);
   const [workflowRuns, setWorkflowRuns] = useState<GitHubWorkflowRun[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,23 +37,23 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
   const [showDispatchModal, setShowDispatchModal] = useState(false);
   const [branchRef, setBranchRef] = useState("main");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/auth/signin");
     }
   }, [authLoading, isAuthenticated, router]);
-  
+
   useEffect(() => {
     async function fetchWorkflowAndRuns() {
       if (githubService && !githubLoading) {
         try {
           setIsLoading(true);
           setError(null);
-          
+
           const workflowData = await githubService.getWorkflow(ownerName, repoName, parseInt(workflowId));
           setWorkflow(workflowData);
-          
+
           const runsData = await githubService.getWorkflowRuns(ownerName, repoName, parseInt(workflowId));
           setWorkflowRuns(runsData);
         } catch (err) {
@@ -62,10 +64,10 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
         }
       }
     }
-    
+
     fetchWorkflowAndRuns();
   }, [githubService, githubLoading, ownerName, repoName, workflowId]);
-  
+
   // Format date to a more readable format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -77,24 +79,24 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
       minute: '2-digit',
     });
   };
-  
+
   const handleDispatchWorkflow = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!workflow) return;
-    
+
     try {
       setIsSubmitting(true);
-      
+
       await githubService?.triggerWorkflow(
         ownerName,
         repoName,
         parseInt(workflowId),
         branchRef
       );
-      
+
       setShowDispatchModal(false);
-      
+
       // Refresh the workflow runs after a short delay
       setTimeout(async () => {
         const runsData = await githubService?.getWorkflowRuns(ownerName, repoName, parseInt(workflowId));
@@ -109,7 +111,7 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
       setIsSubmitting(false);
     }
   };
-  
+
   if (authLoading || githubLoading || isLoading) {
     return (
       <MainLayout>
@@ -119,7 +121,7 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
       </MainLayout>
     );
   }
-  
+
   if (error) {
     return (
       <MainLayout>
@@ -129,16 +131,16 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
       </MainLayout>
     );
   }
-  
+
   if (!workflow) {
     return (
       <MainLayout>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
           <h3 className="text-xl font-medium mb-2">Workflow not found</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            The workflow you're looking for doesn't exist or you don't have permission to view it.
+            The workflow you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.
           </p>
-          <Link 
+          <Link
             href="/actions"
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
           >
@@ -148,12 +150,12 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
       </MainLayout>
     );
   }
-  
+
   return (
     <MainLayout>
       <div className="py-6">
         <div className="mb-6">
-          <Link 
+          <Link
             href={`/repositories/${ownerName}/${repoName}/actions`}
             className="text-blue-600 hover:underline flex items-center"
           >
@@ -163,7 +165,7 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
             Back to Actions
           </Link>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <div>
@@ -172,16 +174,16 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
                 Last updated on {formatDate(workflow.updated_at)}
               </p>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                workflow.state === 'active' 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                workflow.state === 'active'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                   : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
               }`}>
                 {workflow.state}
               </span>
-              
+
               <button
                 onClick={() => setShowDispatchModal(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
@@ -190,11 +192,11 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
               </button>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-4">
-            <Link 
-              href={workflow.html_url} 
-              target="_blank" 
+            <Link
+              href={workflow.html_url}
+              target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline flex items-center"
             >
@@ -203,10 +205,10 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
               </svg>
               View workflow file
             </Link>
-            
-            <Link 
-              href={workflow.badge_url} 
-              target="_blank" 
+
+            <Link
+              href={workflow.badge_url}
+              target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline flex items-center"
             >
@@ -217,15 +219,15 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
             </Link>
           </div>
         </div>
-        
+
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-4">Workflow Runs</h2>
-          
+
           {workflowRuns.length === 0 ? (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
               <h3 className="text-xl font-medium mb-2">No workflow runs found</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                This workflow hasn't been run yet.
+                This workflow hasn&apos;t been run yet.
               </p>
               <button
                 onClick={() => setShowDispatchModal(true)}
@@ -237,9 +239,9 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {workflowRuns.map((run) => (
-                <WorkflowRunCard 
-                  key={run.id} 
-                  workflowRun={run} 
+                <WorkflowRunCard
+                  key={run.id}
+                  workflowRun={run}
                   repoOwner={ownerName}
                   repoName={repoName}
                 />
@@ -247,13 +249,13 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
             </div>
           )}
         </div>
-        
+
         {/* Dispatch Workflow Modal */}
         {showDispatchModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
               <h3 className="text-xl font-semibold mb-4">Run Workflow</h3>
-              
+
               <form onSubmit={handleDispatchWorkflow}>
                 <div className="mb-4">
                   <label htmlFor="branch-ref" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -271,7 +273,7 @@ export default function WorkflowDetailPage({ params }: WorkflowDetailPageProps) 
                     The branch or tag reference where the workflow will run.
                   </p>
                 </div>
-                
+
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"

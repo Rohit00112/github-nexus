@@ -9,12 +9,14 @@ import { useGitHub } from "../../../../../../context/GitHubContext";
 import { GitHubWorkflowRun, GitHubWorkflowJob } from "../../../../../../types/github";
 import LoadingSpinner from "../../../../../../components/ui/LoadingSpinner";
 
+type Params = {
+  owner: string;
+  repo: string;
+  run: string;
+};
+
 interface WorkflowRunDetailPageProps {
-  params: {
-    owner: string;
-    repo: string;
-    run: string;
-  };
+  params: Params;
 }
 
 export default function WorkflowRunDetailPage({ params }: WorkflowRunDetailPageProps) {
@@ -263,7 +265,7 @@ export default function WorkflowRunDetailPage({ params }: WorkflowRunDetailPageP
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
           <h3 className="text-xl font-medium mb-2">Workflow run not found</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            The workflow run you're looking for doesn't exist or you don't have permission to view it.
+            The workflow run you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.
           </p>
           <Link
             href="/actions"
@@ -418,7 +420,7 @@ export default function WorkflowRunDetailPage({ params }: WorkflowRunDetailPageP
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
               <h3 className="text-xl font-medium mb-2">No jobs found</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                This workflow run doesn't have any jobs yet.
+                This workflow run doesn&apos;t have any jobs yet.
               </p>
             </div>
           ) : (
