@@ -40,10 +40,8 @@ const nextConfig = {
     // Disable optimizations that might cause issues
     optimizeCss: false
   },
-  // Explicitly disable prerendering for not-found pages
-  skipPrerender: true,
   // Disable static generation for 404 pages
-  unstable_skipTrailingSlashRedirect: true,
+  skipTrailingSlashRedirect: true,
   // Skip middleware URL normalization
   skipMiddlewareUrlNormalize: true,
   // Exclude default moment locales
