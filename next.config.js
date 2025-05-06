@@ -33,12 +33,14 @@ const nextConfig = {
     // your project has TypeScript errors.
     ignoreBuildErrors: true,
   },
-  // Disable all experimental features
+  // Experimental features configuration
   experimental: {
     // Disable all experimental features
     ppr: false,
     // Disable optimizations that might cause issues
-    optimizeCss: false
+    optimizeCss: false,
+    // Disable static generation for not-found pages
+    missingSuspenseWithCSRBailout: false
   },
   // Disable static generation for 404 pages
   skipTrailingSlashRedirect: true,
@@ -58,6 +60,15 @@ const nextConfig = {
   generateEtags: false,
   // Disable compression
   compress: false,
+  // Custom 404 page
+  async rewrites() {
+    return [
+      {
+        source: '/_not-found',
+        destination: '/404',
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
