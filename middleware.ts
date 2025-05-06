@@ -16,9 +16,9 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/api/auth/signin/github', request.url));
     }
 
-    // For signout, use the Pages Router version
+    // For signout, let the Pages Router handle it
     if (pathname === '/auth/signout' || pathname.startsWith('/auth/signout')) {
-      return NextResponse.rewrite(new URL('/auth/signout', request.url));
+      return NextResponse.next();
     }
 
     // For auth error, let the Pages Router handle it
@@ -57,10 +57,10 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Match all routes except static assets, not-found pages, auth/error, and auth callback
+// Match all routes except static assets, not-found pages, auth pages, and auth callback
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found|auth/error).*)',
+    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found|auth/error|auth/signout).*)',
     '/api/auth/:path*'
   ],
 };

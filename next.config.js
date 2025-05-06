@@ -65,12 +65,11 @@ const nextConfig = {
         source: '/_not-found',
         destination: '/404',
       },
-      {
-        source: '/auth/signout',
-        destination: '/auth/signout',
-      },
     ];
   },
+
+  // Disable static generation for specific pages
+  unstable_excludeFiles: ['**/pages/auth/signout.js'],
 };
 
 module.exports = nextConfig;
