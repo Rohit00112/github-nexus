@@ -9,6 +9,28 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Handle prerendering for client-side pages that require authentication
+  if (
+    pathname === '/issues' ||
+    pathname === '/pull-requests' ||
+    pathname === '/repositories' ||
+    pathname.startsWith('/repositories/')
+  ) {
+    // During build time, Next.js will try to prerender these pages
+    // We need to handle this case differently
+    const isPrerendering = process.env.NODE_ENV === 'production' && !request.headers.get('x-middleware-invoke');
+
+    if (isPrerendering) {
+      // For prerendering, return a minimal response
+      return new NextResponse(null, {
+        status: 200,
+        headers: {
+          'content-type': 'text/html',
+        },
+      });
+    }
+  }
+
   // Handle all auth routes to prevent prerendering issues
   if (pathname.startsWith('/auth/')) {
     // For signin, redirect to GitHub OAuth
@@ -57,10 +79,14 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Match all routes except static assets, not-found pages, auth pages, and dynamic pages
+// Match all routes including client-side pages that need special handling
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found|_not-found|not-found/page|auth/error|auth/signout|issues|pull-requests|repositories|actions|$).*)',
+    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found|_not-found|not-found/page|auth/error|auth/signout|$).*)',
+    '/issues',
+    '/pull-requests',
+    '/repositories',
+    '/repositories/:path*',
     '/api/auth/:path*'
   ],
 };

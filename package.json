@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "NODE_OPTIONS='--max_old_space_size=4096' NEXT_SKIP_INVALID_PRERENDER=true NEXT_TELEMETRY_DISABLED=1 NEXT_IGNORE_PRERENDER_ERRORS=true next build",
+    "build": "NODE_OPTIONS='--max_old_space_size=4096' NEXT_SKIP_INVALID_PRERENDER=true NEXT_TELEMETRY_DISABLED=1 NEXT_IGNORE_PRERENDER_ERRORS=true NEXT_DISABLE_PRERENDER_WARNINGS=true next build",
     "start": "next start",
     "lint": "next lint"
   },

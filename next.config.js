@@ -69,14 +69,35 @@ const nextConfig = {
         {
           source: '/issues',
           destination: '/issues',
+          has: [
+            {
+              type: 'header',
+              key: 'x-prerender',
+              value: '(?!true)',
+            },
+          ],
         },
         {
           source: '/pull-requests',
           destination: '/pull-requests',
+          has: [
+            {
+              type: 'header',
+              key: 'x-prerender',
+              value: '(?!true)',
+            },
+          ],
         },
         {
           source: '/repositories',
           destination: '/repositories',
+          has: [
+            {
+              type: 'header',
+              key: 'x-prerender',
+              value: '(?!true)',
+            },
+          ],
         },
         {
           source: '/',

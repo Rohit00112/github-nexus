@@ -9,7 +9,7 @@ import { GitHubIssue, GitHubRepository } from "../types/github";
 import IssueCard from "../components/issues/IssueCard";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 
-// Mark this page as dynamically rendered
+// Mark this page as dynamically rendered and prevent prerendering
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
