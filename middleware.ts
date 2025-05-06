@@ -84,8 +84,19 @@ export function middleware(request: NextRequest) {
       });
     }
 
-    // Use the App Router's not-found page
-    return NextResponse.rewrite(new URL('/not-found', request.url));
+    // Use the App Router's not-found page (only if not prerendering)
+    // Ensure request.url is a valid absolute URL
+    if (request.url && request.url.startsWith('http')) {
+      return NextResponse.rewrite(new URL('/not-found', request.url));
+    } else {
+      // Fallback: return minimal response if request.url is not valid
+      return new NextResponse(null, {
+        status: 200,
+        headers: {
+          'content-type': 'text/html',
+        },
+      });
+    }
   }
 
   return NextResponse.next();
