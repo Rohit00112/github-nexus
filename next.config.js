@@ -33,6 +33,11 @@ const nextConfig = {
     // your project has TypeScript errors.
     ignoreBuildErrors: true,
   },
+  // Configure not-found handling
+  experimental: {
+    // Prevent Next.js from generating the _not-found route
+    ppr: false
+  },
 };
 
 module.exports = nextConfig;
