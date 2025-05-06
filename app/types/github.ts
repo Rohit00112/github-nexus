@@ -89,6 +89,22 @@ export interface GitHubIssue {
   comments: number;
 }
 
+// GitHub Comment Type
+export interface GitHubComment {
+  id: number;
+  node_id: string;
+  url: string;
+  html_url: string;
+  body: string;
+  user: {
+    login: string;
+    id: number;
+    avatar_url: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
 // GitHub Pull Request Type
 export interface GitHubPullRequest {
   id: number;

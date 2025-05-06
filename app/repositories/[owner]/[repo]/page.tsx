@@ -18,30 +18,32 @@ interface RepositoryDetailPageProps {
 }
 
 export default function RepositoryDetailPage({ params }: RepositoryDetailPageProps) {
-  const { owner, repo } = params;
+  // Access params safely
+  const ownerName = Array.isArray(params.owner) ? params.owner[0] : params.owner;
+  const repoName = Array.isArray(params.repo) ? params.repo[0] : params.repo;
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
-  
+
   const [repository, setRepository] = useState<GitHubRepository | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"code" | "issues" | "pull-requests" | "actions" | "insights">("code");
-  
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/auth/signin");
     }
   }, [authLoading, isAuthenticated, router]);
-  
+
   useEffect(() => {
     async function fetchRepository() {
       if (githubService && !githubLoading) {
         try {
           setIsLoading(true);
           setError(null);
-          
-          const repoData = await githubService.getRepository(owner, repo);
+
+          const repoData = await githubService.getRepository(ownerName, repoName);
           setRepository(repoData);
         } catch (err) {
           console.error("Error fetching repository:", err);
@@ -51,10 +53,10 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
         }
       }
     }
-    
+
     fetchRepository();
-  }, [githubService, githubLoading, owner, repo]);
-  
+  }, [githubService, githubLoading, ownerName, repoName]);
+
   // Format date to a more readable format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -64,7 +66,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
       day: 'numeric',
     });
   };
-  
+
   if (authLoading || githubLoading) {
     return (
       <MainLayout>
@@ -74,7 +76,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
       </MainLayout>
     );
   }
-  
+
   return (
     <MainLayout>
       <div className="py-6">
@@ -102,26 +104,26 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                   {repository.private ? 'Private' : 'Public'}
                 </span>
               </div>
-              
+
               <h1 className="text-3xl font-bold mb-2">{repository.name}</h1>
-              
+
               {repository.description && (
                 <p className="text-gray-700 dark:text-gray-300 mb-4">
                   {repository.description}
                 </p>
               )}
-              
+
               <div className="flex flex-wrap gap-2 mb-4">
                 {repository.topics && repository.topics.map(topic => (
-                  <span 
-                    key={topic} 
+                  <span
+                    key={topic}
                     className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full"
                   >
                     {topic}
                   </span>
                 ))}
               </div>
-              
+
               <div className="flex flex-wrap items-center text-sm text-gray-600 dark:text-gray-400 gap-x-4 gap-y-2">
                 <div className="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -129,27 +131,27 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                   </svg>
                   <span>{repository.stargazers_count} stars</span>
                 </div>
-                
+
                 <div className="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                   </svg>
                   <span>{repository.forks_count} forks</span>
                 </div>
-                
+
                 <div className="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <span>{repository.open_issues_count} issues</span>
                 </div>
-                
+
                 <div className="flex items-center">
                   <span>Updated on {formatDate(repository.updated_at)}</span>
                 </div>
               </div>
             </div>
-            
+
             <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
               <nav className="flex -mb-px">
                 <button
@@ -219,7 +221,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                 </button>
               </nav>
             </div>
-            
+
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               {activeTab === 'code' && (
                 <div className="text-center py-8">
@@ -241,7 +243,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                   </a>
                 </div>
               )}
-              
+
               {activeTab === 'issues' && (
                 <div className="text-center py-8">
                   <h3 className="text-xl font-medium mb-2">Issues</h3>
@@ -250,7 +252,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                   </p>
                 </div>
               )}
-              
+
               {activeTab === 'pull-requests' && (
                 <div className="text-center py-8">
                   <h3 className="text-xl font-medium mb-2">Pull Requests</h3>
@@ -259,7 +261,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                   </p>
                 </div>
               )}
-              
+
               {activeTab === 'actions' && (
                 <div className="text-center py-8">
                   <h3 className="text-xl font-medium mb-2">Actions</h3>
@@ -268,7 +270,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                   </p>
                 </div>
               )}
-              
+
               {activeTab === 'insights' && (
                 <div className="text-center py-8">
                   <h3 className="text-xl font-medium mb-2">Insights</h3>
