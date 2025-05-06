@@ -1,10 +1,10 @@
-'use client';
+// Mark this page as dynamically rendered
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
-import dynamic from 'next/dynamic';
-
-// Import the client component with no SSR to avoid prerendering issues
-const ActionsClient = dynamic(() => import('./client'), { ssr: false });
+// Import the client wrapper component
+import ClientWrapper from './client-wrapper';
 
 export default function ActionsPage() {
-  return <ActionsClient />;
+  return <ClientWrapper />;
 }

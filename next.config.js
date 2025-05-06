@@ -96,6 +96,10 @@ const nextConfig = {
           source: '/_not-found',
           destination: '/_not-found',
         },
+        {
+          source: '/actions',
+          destination: '/actions',
+        },
       ],
       fallback: [],
     };
