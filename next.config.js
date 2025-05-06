@@ -67,7 +67,7 @@ const nextConfig = {
         // Handle not-found routes
         {
           source: '/_not-found',
-          destination: '/not-found',
+          destination: '/404',
         },
       ],
       afterFiles: [
@@ -92,10 +92,7 @@ const nextConfig = {
           source: '/not-found',
           destination: '/not-found',
         },
-        {
-          source: '/_not-found',
-          destination: '/_not-found',
-        },
+
         {
           source: '/actions',
           destination: '/actions',
