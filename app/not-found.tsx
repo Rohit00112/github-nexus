@@ -12,7 +12,7 @@ export default function NotFound() {
       <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
         <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">404</h1>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          The page you are looking for doesn't exist or has been moved.
+          The page you are looking for doesn&apos;t exist or has been moved.
         </p>
         <Link
           href="/"

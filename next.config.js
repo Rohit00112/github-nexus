@@ -63,13 +63,7 @@ const nextConfig = {
   // Configure custom routes
   async rewrites() {
     return {
-      beforeFiles: [
-        // Handle not-found routes
-        {
-          source: '/_not-found',
-          destination: '/404',
-        },
-      ],
+      beforeFiles: [],
       afterFiles: [
         // Handle dynamic pages that can't be prerendered
         {
@@ -88,11 +82,6 @@ const nextConfig = {
           source: '/',
           destination: '/',
         },
-        {
-          source: '/not-found',
-          destination: '/not-found',
-        },
-
         {
           source: '/actions',
           destination: '/actions',
