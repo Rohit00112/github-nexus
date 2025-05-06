@@ -32,7 +32,7 @@ export default function ActionsClient() {
   const [filterState, setFilterState] = useState<"all" | "active" | "disabled">("all");
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    if (typeof window !== 'undefined' && !authLoading && !isAuthenticated) {
       router.push("/auth/signin");
     }
   }, [authLoading, isAuthenticated, router]);
