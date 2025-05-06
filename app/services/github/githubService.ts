@@ -76,6 +76,75 @@ export class GitHubService {
       per_page: perPage,
       page,
     });
+    return data.workflows;
+  }
+
+  async getWorkflow(owner: string, repo: string, workflow_id: number) {
+    const { data } = await this.octokit.rest.actions.getWorkflow({
+      owner,
+      repo,
+      workflow_id,
+    });
+    return data;
+  }
+
+  async getWorkflowRuns(owner: string, repo: string, workflow_id: number, page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.actions.listWorkflowRuns({
+      owner,
+      repo,
+      workflow_id,
+      per_page: perPage,
+      page,
+    });
+    return data.workflow_runs;
+  }
+
+  async getWorkflowRun(owner: string, repo: string, run_id: number) {
+    const { data } = await this.octokit.rest.actions.getWorkflowRun({
+      owner,
+      repo,
+      run_id,
+    });
+    return data;
+  }
+
+  async getWorkflowRunJobs(owner: string, repo: string, run_id: number, page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.actions.listJobsForWorkflowRun({
+      owner,
+      repo,
+      run_id,
+      per_page: perPage,
+      page,
+    });
+    return data.jobs;
+  }
+
+  async rerunWorkflow(owner: string, repo: string, run_id: number) {
+    const { data } = await this.octokit.rest.actions.reRunWorkflow({
+      owner,
+      repo,
+      run_id,
+    });
+    return data;
+  }
+
+  async cancelWorkflowRun(owner: string, repo: string, run_id: number) {
+    const { data } = await this.octokit.rest.actions.cancelWorkflowRun({
+      owner,
+      repo,
+      run_id,
+    });
+    return data;
+  }
+
+  async triggerWorkflow(owner: string, repo: string, workflow_id: number, ref: string, inputs?: Record<string, string>) {
+    const { data } = await this.octokit.rest.actions.createWorkflowDispatch({
+      owner,
+      repo,
+      workflow_id,
+      ref,
+      inputs,
+    });
     return data;
   }
 

@@ -118,4 +118,114 @@ export interface GitHubPullRequest {
   additions: number;
   deletions: number;
   changed_files: number;
+  head?: {
+    ref: string;
+    sha: string;
+    repo: {
+      id: number;
+      name: string;
+      full_name: string;
+    };
+  };
+  base?: {
+    ref: string;
+    sha: string;
+    repo: {
+      id: number;
+      name: string;
+      full_name: string;
+    };
+  };
+}
+
+// GitHub Workflow Type
+export interface GitHubWorkflow {
+  id: number;
+  node_id: string;
+  name: string;
+  path: string;
+  state: string;
+  created_at: string;
+  updated_at: string;
+  url: string;
+  html_url: string;
+  badge_url: string;
+}
+
+// GitHub Workflow Run Type
+export interface GitHubWorkflowRun {
+  id: number;
+  name: string;
+  node_id: string;
+  head_branch: string;
+  head_sha: string;
+  run_number: number;
+  event: string;
+  status: string;
+  conclusion: string | null;
+  workflow_id: number;
+  check_suite_id: number;
+  check_suite_node_id: string;
+  url: string;
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+  run_attempt: number;
+  run_started_at: string;
+  jobs_url: string;
+  logs_url: string;
+  check_suite_url: string;
+  artifacts_url: string;
+  cancel_url: string;
+  rerun_url: string;
+  workflow_url: string;
+  repository: {
+    id: number;
+    name: string;
+    full_name: string;
+  };
+  head_commit: {
+    id: string;
+    tree_id: string;
+    message: string;
+    timestamp: string;
+    author: {
+      name: string;
+      email: string;
+    };
+    committer: {
+      name: string;
+      email: string;
+    };
+  };
+}
+
+// GitHub Workflow Job Type
+export interface GitHubWorkflowJob {
+  id: number;
+  run_id: number;
+  run_url: string;
+  node_id: string;
+  head_sha: string;
+  url: string;
+  html_url: string;
+  status: string;
+  conclusion: string | null;
+  started_at: string;
+  completed_at: string | null;
+  name: string;
+  steps: {
+    name: string;
+    status: string;
+    conclusion: string | null;
+    number: number;
+    started_at: string;
+    completed_at: string | null;
+  }[];
+  check_run_url: string;
+  labels: string[];
+  runner_id: number | null;
+  runner_name: string | null;
+  runner_group_id: number | null;
+  runner_group_name: string | null;
 }
