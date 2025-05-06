@@ -128,6 +128,77 @@ export class GitHubService {
     return data;
   }
 
+  async getPullRequest(owner: string, repo: string, pull_number: number) {
+    const { data } = await this.octokit.rest.pulls.get({
+      owner,
+      repo,
+      pull_number,
+    });
+    return data;
+  }
+
+  async getPullRequestComments(owner: string, repo: string, pull_number: number, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.issues.listComments({
+      owner,
+      repo,
+      issue_number: pull_number,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async createPullRequestComment(owner: string, repo: string, pull_number: number, body: string) {
+    const { data } = await this.octokit.rest.issues.createComment({
+      owner,
+      repo,
+      issue_number: pull_number,
+      body,
+    });
+    return data;
+  }
+
+  async updatePullRequest(owner: string, repo: string, pull_number: number, options: {
+    title?: string;
+    body?: string;
+    state?: "open" | "closed";
+    base?: string;
+  }) {
+    const { data } = await this.octokit.rest.pulls.update({
+      owner,
+      repo,
+      pull_number,
+      ...options,
+    });
+    return data;
+  }
+
+  async mergePullRequest(owner: string, repo: string, pull_number: number, commit_message?: string, merge_method: "merge" | "squash" | "rebase" = "merge") {
+    const { data } = await this.octokit.rest.pulls.merge({
+      owner,
+      repo,
+      pull_number,
+      commit_message,
+      merge_method,
+    });
+    return data;
+  }
+
+  async createPullRequest(owner: string, repo: string, options: {
+    title: string;
+    body?: string;
+    head: string;
+    base: string;
+    draft?: boolean;
+  }) {
+    const { data } = await this.octokit.rest.pulls.create({
+      owner,
+      repo,
+      ...options,
+    });
+    return data;
+  }
+
   // Workflows methods
   async getWorkflows(owner: string, repo: string, page = 1, perPage = 10) {
     const { data } = await this.octokit.rest.actions.listRepoWorkflows({
