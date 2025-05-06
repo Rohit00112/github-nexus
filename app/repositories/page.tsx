@@ -10,34 +10,38 @@ import RepositoryCard from "../components/repository/RepositoryCard";
 import CreateRepositoryModal from "../components/repository/CreateRepositoryModal";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 
+// Mark this page as dynamically rendered
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export default function RepositoriesPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
-  
+
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"updated" | "name" | "stars">("updated");
-  
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/auth/signin");
     }
   }, [authLoading, isAuthenticated, router]);
-  
+
   useEffect(() => {
     async function fetchRepositories() {
       if (githubService && !githubLoading) {
         try {
           setIsLoading(true);
           setError(null);
-          
+
           const user = await githubService.getCurrentUser();
           const repos = await githubService.getUserRepositories(user.login, 1, 100);
-          
+
           setRepositories(repos);
         } catch (err) {
           console.error("Error fetching repositories:", err);
@@ -47,22 +51,22 @@ export default function RepositoriesPage() {
         }
       }
     }
-    
+
     fetchRepositories();
   }, [githubService, githubLoading]);
-  
+
   const handleCreateRepository = async (data: { name: string; description: string; isPrivate: boolean }) => {
     if (githubService) {
       try {
         setIsLoading(true);
-        
+
         const newRepo = await githubService.createRepository({
           name: data.name,
           description: data.description,
           private: data.isPrivate,
           auto_init: true,
         });
-        
+
         setRepositories([newRepo, ...repositories]);
         setShowCreateModal(false);
       } catch (err) {
@@ -73,9 +77,9 @@ export default function RepositoriesPage() {
       }
     }
   };
-  
+
   const filteredRepositories = repositories
-    .filter(repo => 
+    .filter(repo =>
       repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (repo.description && repo.description.toLowerCase().includes(searchQuery.toLowerCase()))
     )
@@ -88,7 +92,7 @@ export default function RepositoriesPage() {
         return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
       }
     });
-  
+
   if (authLoading || githubLoading) {
     return (
       <MainLayout>
@@ -98,7 +102,7 @@ export default function RepositoriesPage() {
       </MainLayout>
     );
   }
-  
+
   return (
     <MainLayout>
       <div className="py-6">
@@ -114,7 +118,7 @@ export default function RepositoriesPage() {
             New Repository
           </button>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
@@ -144,7 +148,7 @@ export default function RepositoriesPage() {
             </div>
           </div>
         </div>
-        
+
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <LoadingSpinner size="medium" />
@@ -174,7 +178,7 @@ export default function RepositoriesPage() {
           </div>
         )}
       </div>
-      
+
       {showCreateModal && (
         <CreateRepositoryModal
           onClose={() => setShowCreateModal(false)}

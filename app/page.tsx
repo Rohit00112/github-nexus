@@ -1,6 +1,12 @@
+"use client";
+
 import Image from "next/image";
 import MainLayout from "./components/layout/MainLayout";
 import Link from "next/link";
+
+// Mark this page as dynamically rendered
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export default function Home() {
   return (

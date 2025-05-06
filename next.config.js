@@ -76,6 +76,18 @@ const nextConfig = {
           source: '/issues',
           destination: '/issues',
         },
+        {
+          source: '/pull-requests',
+          destination: '/pull-requests',
+        },
+        {
+          source: '/repositories',
+          destination: '/repositories',
+        },
+        {
+          source: '/',
+          destination: '/',
+        },
       ],
       fallback: [],
     };

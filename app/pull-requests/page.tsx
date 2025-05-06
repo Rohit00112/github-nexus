@@ -9,11 +9,15 @@ import { GitHubPullRequest, GitHubRepository } from "../types/github";
 import PullRequestCard from "../components/pull-requests/PullRequestCard";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 
+// Mark this page as dynamically rendered
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export default function PullRequestsPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
-  
+
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [pullRequests, setPullRequests] = useState<GitHubPullRequest[]>([]);
@@ -21,25 +25,25 @@ export default function PullRequestsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterState, setFilterState] = useState<"all" | "open" | "closed" | "merged" | "draft">("all");
-  
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/auth/signin");
     }
   }, [authLoading, isAuthenticated, router]);
-  
+
   useEffect(() => {
     async function fetchRepositories() {
       if (githubService && !githubLoading) {
         try {
           setIsLoading(true);
           setError(null);
-          
+
           const user = await githubService.getCurrentUser();
           const repos = await githubService.getUserRepositories(user.login, 1, 100);
-          
+
           setRepositories(repos);
-          
+
           // Select the first repository by default
           if (repos.length > 0 && !selectedRepo) {
             setSelectedRepo(repos[0].full_name);
@@ -52,20 +56,20 @@ export default function PullRequestsPage() {
         }
       }
     }
-    
+
     fetchRepositories();
   }, [githubService, githubLoading, selectedRepo]);
-  
+
   useEffect(() => {
     async function fetchPullRequests() {
       if (githubService && selectedRepo) {
         try {
           setIsLoading(true);
           setError(null);
-          
+
           const [owner, repo] = selectedRepo.split('/');
           const prsData = await githubService.getPullRequests(owner, repo, 1, 100);
-          
+
           setPullRequests(prsData);
         } catch (err) {
           console.error("Error fetching pull requests:", err);
@@ -75,12 +79,12 @@ export default function PullRequestsPage() {
         }
       }
     }
-    
+
     if (selectedRepo) {
       fetchPullRequests();
     }
   }, [githubService, selectedRepo]);
-  
+
   const filteredPullRequests = pullRequests
     .filter(pr => {
       // Filter by state
@@ -94,12 +98,12 @@ export default function PullRequestsPage() {
         return pr.state === filterState;
       }
     })
-    .filter(pr => 
+    .filter(pr =>
       // Filter by search query
       pr.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (pr.body && pr.body.toLowerCase().includes(searchQuery.toLowerCase()))
     );
-  
+
   if (authLoading || githubLoading) {
     return (
       <MainLayout>
@@ -109,14 +113,14 @@ export default function PullRequestsPage() {
       </MainLayout>
     );
   }
-  
+
   return (
     <MainLayout>
       <div className="py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Pull Requests</h1>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="md:w-1/3">
@@ -137,7 +141,7 @@ export default function PullRequestsPage() {
                 ))}
               </select>
             </div>
-            
+
             <div className="md:w-1/3">
               <label htmlFor="pr-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Search pull requests
@@ -156,7 +160,7 @@ export default function PullRequestsPage() {
                 </svg>
               </div>
             </div>
-            
+
             <div className="md:w-1/3">
               <label htmlFor="state-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 State
@@ -176,7 +180,7 @@ export default function PullRequestsPage() {
             </div>
           </div>
         </div>
-        
+
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <LoadingSpinner size="medium" />
@@ -196,8 +200,8 @@ export default function PullRequestsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
             <h3 className="text-xl font-medium mb-2">No pull requests found</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {searchQuery || filterState !== "all" 
-                ? "No pull requests match your search criteria." 
+              {searchQuery || filterState !== "all"
+                ? "No pull requests match your search criteria."
                 : "This repository doesn't have any pull requests yet."}
             </p>
           </div>
@@ -206,9 +210,9 @@ export default function PullRequestsPage() {
             {filteredPullRequests.map((pr) => {
               const [owner, repo] = selectedRepo.split('/');
               return (
-                <PullRequestCard 
-                  key={pr.id} 
-                  pullRequest={pr} 
+                <PullRequestCard
+                  key={pr.id}
+                  pullRequest={pr}
                   repoOwner={owner}
                   repoName={repo}
                 />

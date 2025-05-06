@@ -60,7 +60,7 @@ export function middleware(request: NextRequest) {
 // Match all routes except static assets, not-found pages, auth pages, and auth callback
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found|_not-found|auth/error|auth/signout|issues).*)',
+    '/((?!_next/static|_next/image|_next/data|favicon.ico|404|not-found|_not-found|auth/error|auth/signout|issues|pull-requests|repositories|$).*)',
     '/api/auth/:path*'
   ],
 };
