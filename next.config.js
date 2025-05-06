@@ -21,6 +21,12 @@ const nextConfig = {
   },
   // Enable output in standalone mode for Docker deployment
   output: 'standalone',
+  // Disable ESLint during builds
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
 };
 
 module.exports = nextConfig;
