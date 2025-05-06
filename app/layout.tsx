@@ -28,7 +28,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="no-js">
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              document.documentElement.classList.remove('no-js');
+              document.documentElement.classList.add('js');
+            })();
+          `
+        }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

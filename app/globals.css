@@ -58,3 +58,9 @@ body {
     background: #777;
   }
 }
+
+/* Hide server-only content when JavaScript is enabled or client component is mounted */
+.js .only-on-server,
+.client-mounted .only-on-server {
+  display: none !important;
+}
