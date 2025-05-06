@@ -2,9 +2,28 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { FC } from 'react';
+import { FC, useState, useRef, useEffect } from 'react';
+import { useAuth } from '../../hooks/useAuth';
 
 const Header: FC = () => {
+  const { session, isAuthenticated, isLoading, signIn, signOut } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <header className="bg-gray-900 text-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -23,34 +42,94 @@ const Header: FC = () => {
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center space-x-6">
-          <Link href="/repositories" className="hover:text-gray-300 transition-colors">
-            Repositories
-          </Link>
-          <Link href="/issues" className="hover:text-gray-300 transition-colors">
-            Issues
-          </Link>
-          <Link href="/pull-requests" className="hover:text-gray-300 transition-colors">
-            Pull Requests
-          </Link>
-          <Link href="/actions" className="hover:text-gray-300 transition-colors">
-            Actions
-          </Link>
-          <Link href="/insights" className="hover:text-gray-300 transition-colors">
-            Insights
-          </Link>
-        </nav>
+        {isAuthenticated && (
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link href="/repositories" className="hover:text-gray-300 transition-colors">
+              Repositories
+            </Link>
+            <Link href="/issues" className="hover:text-gray-300 transition-colors">
+              Issues
+            </Link>
+            <Link href="/pull-requests" className="hover:text-gray-300 transition-colors">
+              Pull Requests
+            </Link>
+            <Link href="/actions" className="hover:text-gray-300 transition-colors">
+              Actions
+            </Link>
+            <Link href="/insights" className="hover:text-gray-300 transition-colors">
+              Insights
+            </Link>
+          </nav>
+        )}
 
         <div className="flex items-center space-x-4">
-          <button className="p-2 rounded-full hover:bg-gray-700 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-            </svg>
-          </button>
-          <div className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden">
-            {/* User avatar will go here */}
-            <div className="w-full h-full bg-gray-500"></div>
-          </div>
+          {isAuthenticated ? (
+            <>
+              <button className="p-2 rounded-full hover:bg-gray-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                </svg>
+              </button>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-700 focus:outline-none focus:border-blue-500"
+                >
+                  {session?.user?.image ? (
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || "User"}
+                      width={32}
+                      height={32}
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-500 flex items-center justify-center text-white">
+                      {session?.user?.name?.charAt(0) || "U"}
+                    </div>
+                  )}
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{session?.user?.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{session?.user?.email}</p>
+                    </div>
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Your Profile
+                    </Link>
+                    <Link
+                      href="/settings"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Settings
+                    </Link>
+                    <div className="border-t border-gray-200 dark:border-gray-700"></div>
+                    <Link
+                      href="/auth/signout"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Sign out
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <Link
+              href="/auth/signin"
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </header>
