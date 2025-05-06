@@ -118,4 +118,22 @@ export interface GitHubPullRequest {
   additions: number;
   deletions: number;
   changed_files: number;
+  head: {
+    ref: string;
+    sha: string;
+    repo: {
+      id: number;
+      name: string;
+      full_name: string;
+    };
+  };
+  base: {
+    ref: string;
+    sha: string;
+    repo: {
+      id: number;
+      name: string;
+      full_name: string;
+    };
+  };
 }
