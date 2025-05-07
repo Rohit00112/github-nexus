@@ -9,6 +9,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useGitHub } from "../../../context/GitHubContext";
 import { GitHubRepository } from "../../../types/github";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
+import RepositoryAnalytics from "../../../components/repository/RepositoryAnalytics";
 
 interface RepositoryDetailPageProps {
   params: {
@@ -272,12 +273,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
               )}
 
               {activeTab === 'insights' && (
-                <div className="text-center py-8">
-                  <h3 className="text-xl font-medium mb-2">Insights</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    This feature is under development. Check back soon!
-                  </p>
-                </div>
+                <RepositoryAnalytics owner={ownerName} repo={repoName} />
               )}
             </div>
           </>
