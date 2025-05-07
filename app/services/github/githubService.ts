@@ -1,7 +1,8 @@
 import { Octokit } from "octokit";
 
 export class GitHubService {
-  private octokit: Octokit;
+  // Make octokit public so components can access it directly
+  public octokit: Octokit;
 
   constructor(accessToken: string) {
     this.octokit = new Octokit({

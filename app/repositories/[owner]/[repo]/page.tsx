@@ -9,6 +9,9 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useGitHub } from "../../../context/GitHubContext";
 import { GitHubRepository } from "../../../types/github";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
+import FileExplorer from "../../../components/repository/FileExplorer";
+import ActivityFeed from "../../../components/repository/ActivityFeed";
+import Contributors from "../../../components/repository/Contributors";
 
 interface RepositoryDetailPageProps {
   params: {
@@ -224,59 +227,116 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               {activeTab === 'code' && (
-                <div className="text-center py-8">
-                  <h3 className="text-xl font-medium mb-2">Repository Content</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    This feature is under development. Check back soon!
-                  </p>
-                  <a
-                    href={repository.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                      <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-                    </svg>
-                    View on GitHub
-                  </a>
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-medium">Repository Files</h3>
+                    <a
+                      href={repository.html_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                      </svg>
+                      View on GitHub
+                    </a>
+                  </div>
+                  <FileExplorer owner={ownerName} repo={repoName} />
                 </div>
               )}
 
               {activeTab === 'issues' && (
-                <div className="text-center py-8">
-                  <h3 className="text-xl font-medium mb-2">Issues</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    This feature is under development. Check back soon!
-                  </p>
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-medium">Issues</h3>
+                    <Link
+                      href={`/issues?repo=${ownerName}/${repoName}`}
+                      className="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      View All Issues
+                    </Link>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 className="text-lg font-medium">Open Issues</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {repository.open_issues_count} open issues
+                        </p>
+                      </div>
+                      <Link
+                        href={`/issues/new?repo=${ownerName}/${repoName}`}
+                        className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm"
+                      >
+                        New Issue
+                      </Link>
+                    </div>
+
+                    <div className="text-center py-8">
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                        Issues list is being loaded from the Issues page. Click "View All Issues" to see them.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {activeTab === 'pull-requests' && (
-                <div className="text-center py-8">
-                  <h3 className="text-xl font-medium mb-2">Pull Requests</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    This feature is under development. Check back soon!
-                  </p>
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-medium">Pull Requests</h3>
+                    <Link
+                      href={`/pull-requests?repo=${ownerName}/${repoName}`}
+                      className="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      View All Pull Requests
+                    </Link>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 className="text-lg font-medium">Open Pull Requests</h4>
+                      </div>
+                      <a
+                        href={`${repository.html_url}/compare`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm"
+                      >
+                        New Pull Request
+                      </a>
+                    </div>
+
+                    <div className="text-center py-8">
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                        Pull requests list is being loaded from the Pull Requests page. Click "View All Pull Requests" to see them.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {activeTab === 'actions' && (
-                <div className="text-center py-8">
-                  <h3 className="text-xl font-medium mb-2">Actions</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    This feature is under development. Check back soon!
-                  </p>
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-medium">Activity</h3>
+                  </div>
+
+                  <ActivityFeed owner={ownerName} repo={repoName} />
                 </div>
               )}
 
               {activeTab === 'insights' && (
-                <div className="text-center py-8">
-                  <h3 className="text-xl font-medium mb-2">Insights</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    This feature is under development. Check back soon!
-                  </p>
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-medium">Contributors</h3>
+                  </div>
+
+                  <Contributors owner={ownerName} repo={repoName} />
                 </div>
               )}
             </div>
