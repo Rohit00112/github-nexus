@@ -58,6 +58,9 @@ export function middleware(request: NextRequest) {
     '/repositories',
     '/not-found',
     '/_not-found',
+    '/search',
+    '/profile',
+    '/actions',
   ];
 
   // Check if the path starts with any valid path
@@ -89,11 +92,15 @@ export function middleware(request: NextRequest) {
     }
 
     // Use the App Router's not-found page (only if not prerendering)
-    // Ensure request.url is a valid absolute URL
-    if (request.url && request.url.startsWith('http')) {
-      return NextResponse.rewrite(new URL('/not-found', request.url));
-    } else {
-      // Fallback: return minimal response if request.url is not valid
+    // Ensure request.url is a valid absolute URL and create a proper URL object
+    try {
+      // Make sure we have a valid URL to work with
+      const baseUrl = request.url || 'http://localhost:3000';
+      const notFoundUrl = new URL('/not-found', baseUrl);
+      return NextResponse.rewrite(notFoundUrl);
+    } catch (error) {
+      console.error('Error creating URL for not-found page:', error);
+      // Fallback: return minimal response if URL creation fails
       return new NextResponse(null, {
         status: 200,
         headers: {
@@ -127,6 +134,9 @@ export const config = {
     '/pull-requests',
     '/repositories',
     '/repositories/:path*',
+    '/search',
+    '/profile',
+    '/actions',
     '/api/auth/:path*'
   ],
 };
