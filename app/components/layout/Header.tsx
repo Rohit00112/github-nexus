@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FC, useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import ThemeToggle from '../ui/ThemeToggle';
+import SearchBar from '../ui/SearchBar';
 
 const Header: FC = () => {
   const { session, isAuthenticated, isLoading, signIn, signOut } = useAuth();
@@ -63,6 +65,14 @@ const Header: FC = () => {
         )}
 
         <div className="flex items-center space-x-4">
+          {isAuthenticated && (
+            <div className="hidden md:block mr-2">
+              <SearchBar />
+            </div>
+          )}
+
+          <ThemeToggle />
+
           {isAuthenticated ? (
             <>
               <button className="p-2 rounded-full hover:bg-gray-700 transition-colors">
