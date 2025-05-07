@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,22 +17,22 @@ export const fetchCache = 'force-no-store';
 export default function NotificationsPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { 
-    notifications, 
-    isLoading, 
-    error, 
-    fetchNotifications, 
-    markAsRead, 
-    markAllAsRead 
+  const {
+    notifications,
+    isLoading,
+    error,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead
   } = useNotifications();
-  
+
   const [filter, setFilter] = useState<'all' | 'unread' | 'participating'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [repoFilter, setRepoFilter] = useState<string>('all');
-  
+
   // Get unique repositories from notifications
   const repositories = [...new Set(notifications.map(n => n.repository.full_name))];
-  
+
   // Get unique notification types
   const notificationTypes = [...new Set(notifications.map(n => n.subject.type))];
 
@@ -41,13 +41,13 @@ export default function NotificationsPage() {
     // Filter by read/unread status
     if (filter === 'unread' && !notification.unread) return false;
     if (filter === 'participating' && notification.reason !== 'mention' && notification.reason !== 'team_mention') return false;
-    
+
     // Filter by type
     if (typeFilter !== 'all' && notification.subject.type !== typeFilter) return false;
-    
+
     // Filter by repository
     if (repoFilter !== 'all' && notification.repository.full_name !== repoFilter) return false;
-    
+
     return true;
   });
 
@@ -67,31 +67,38 @@ export default function NotificationsPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
+  // Fetch notifications when filters change
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      handleRefresh();
+    }
+  }, [filter, typeFilter, repoFilter, isAuthenticated, authLoading, handleRefresh]);
+
   // Format notification time
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (diffInSeconds < 60) {
       return `${diffInSeconds} seconds ago`;
     }
-    
+
     const diffInMinutes = Math.floor(diffInSeconds / 60);
     if (diffInMinutes < 60) {
       return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
     }
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) {
       return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
     }
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 30) {
       return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
     }
-    
+
     return date.toLocaleDateString();
   };
 
@@ -137,22 +144,29 @@ export default function NotificationsPage() {
       // Extract the path from the API URL
       const urlParts = notification.subject.url.split('/');
       const resourceType = notification.subject.type.toLowerCase();
-      
+
       if (resourceType === 'issue') {
         return `/repositories/${notification.repository.owner.login}/${notification.repository.name}/issues/${urlParts[urlParts.length - 1]}`;
       } else if (resourceType === 'pullrequest') {
         return `/repositories/${notification.repository.owner.login}/${notification.repository.name}/pull/${urlParts[urlParts.length - 1]}`;
       }
     }
-    
+
     // Fallback to repository URL
     return `/repositories/${notification.repository.owner.login}/${notification.repository.name}`;
   };
 
   // Handle refresh
-  const handleRefresh = () => {
-    fetchNotifications({ all: filter === 'all' });
-  };
+  const handleRefresh = useCallback(async () => {
+    try {
+      await fetchNotifications({
+        all: filter === 'all',
+        participating: filter === 'participating'
+      });
+    } catch (err) {
+      console.error("Error refreshing notifications:", err);
+    }
+  }, [fetchNotifications, filter]);
 
   if (authLoading) {
     return (
@@ -277,7 +291,7 @@ export default function NotificationsPage() {
                 {Object.entries(groupedNotifications).map(([repoName, repoNotifications]) => (
                   <div key={repoName} className="border-b border-gray-200 dark:border-gray-700 last:border-0">
                     <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 flex justify-between items-center">
-                      <Link 
+                      <Link
                         href={`/repositories/${repoName}`}
                         className="font-medium text-gray-900 dark:text-white hover:underline"
                       >
@@ -287,9 +301,9 @@ export default function NotificationsPage() {
                         {repoNotifications.length} notification{repoNotifications.length !== 1 ? 's' : ''}
                       </span>
                     </div>
-                    
+
                     {repoNotifications.map(notification => (
-                      <div 
+                      <div
                         key={notification.id}
                         className={`px-4 py-3 border-t border-gray-200 dark:border-gray-700 first:border-0 ${
                           notification.unread ? 'bg-blue-50 dark:bg-blue-900/20' : ''
@@ -301,7 +315,7 @@ export default function NotificationsPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <Link 
+                              <Link
                                 href={getNotificationUrl(notification)}
                                 onClick={() => notification.unread && markAsRead(notification.thread_id)}
                                 className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
@@ -340,8 +354,8 @@ export default function NotificationsPage() {
                 <p className="mb-2">No notifications found</p>
                 <p className="text-sm">
                   {filter !== 'all' ? (
-                    <button 
-                      onClick={() => setFilter('all')} 
+                    <button
+                      onClick={() => setFilter('all')}
                       className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       View all notifications

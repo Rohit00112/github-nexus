@@ -41,12 +41,13 @@ interface NotificationsProviderProps {
 
 export function NotificationsProvider({ children }: NotificationsProviderProps) {
   const { githubService } = useGitHub();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [notifications, setNotifications] = useState<GitHubNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
+  const [initialFetchDone, setInitialFetchDone] = useState(false);
 
   // Fetch notifications
   const fetchNotifications = useCallback(async (options?: {
@@ -54,7 +55,13 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
     participating?: boolean;
     since?: string;
   }) => {
-    if (!githubService || !isAuthenticated) return;
+    if (!githubService || !isAuthenticated) {
+      // If not authenticated or no service, set empty notifications and stop loading
+      setNotifications([]);
+      setUnreadCount(0);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -66,17 +73,31 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
         fetchOptions.since = lastFetchTime.toISOString();
       }
 
-      const data = await githubService.getNotifications({
-        ...fetchOptions,
-        per_page: 50,
+      // Add a timeout to prevent infinite loading
+      const timeoutPromise = new Promise<GitHubNotification[]>((_, reject) => {
+        setTimeout(() => reject(new Error("Request timeout")), 10000);
       });
 
+      // Race between the actual request and the timeout
+      const data = await Promise.race([
+        githubService.getNotifications({
+          ...fetchOptions,
+          per_page: 50,
+        }),
+        timeoutPromise
+      ]);
+
+      // If we get here, the request succeeded
       setNotifications(data);
       setUnreadCount(data.filter(notification => notification.unread).length);
       setLastFetchTime(new Date());
     } catch (err) {
       console.error("Error fetching notifications:", err);
       setError("Failed to fetch notifications. Please try again later.");
+
+      // Set empty notifications array to prevent UI from being stuck
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -88,16 +109,16 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
 
     try {
       await githubService.markNotificationAsRead(threadId);
-      
+
       // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.thread_id === threadId 
-            ? { ...notification, unread: false } 
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.thread_id === threadId
+            ? { ...notification, unread: false }
             : notification
         )
       );
-      
+
       // Update unread count
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
@@ -112,12 +133,12 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
 
     try {
       await githubService.markAllNotificationsAsRead();
-      
+
       // Update local state
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(notification => ({ ...notification, unread: false }))
       );
-      
+
       // Update unread count
       setUnreadCount(0);
     } catch (err) {
@@ -132,17 +153,17 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
 
     try {
       await githubService.markRepositoryNotificationsAsRead(owner, repo);
-      
+
       // Update local state
       const repoFullName = `${owner}/${repo}`;
-      const updatedNotifications = notifications.map(notification => 
-        notification.repository.full_name === repoFullName 
-          ? { ...notification, unread: false } 
+      const updatedNotifications = notifications.map(notification =>
+        notification.repository.full_name === repoFullName
+          ? { ...notification, unread: false }
           : notification
       );
-      
+
       setNotifications(updatedNotifications);
-      
+
       // Update unread count
       setUnreadCount(updatedNotifications.filter(n => n.unread).length);
     } catch (err) {
@@ -153,10 +174,12 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
 
   // Initial fetch
   useEffect(() => {
-    if (isAuthenticated && githubService) {
+    // Only fetch if authenticated, service is available, and auth loading is complete
+    if (isAuthenticated && githubService && !authLoading && !initialFetchDone) {
       fetchNotifications();
+      setInitialFetchDone(true);
     }
-  }, [isAuthenticated, githubService, fetchNotifications]);
+  }, [isAuthenticated, githubService, fetchNotifications, authLoading, initialFetchDone]);
 
   // Periodic fetch (every 5 minutes)
   useEffect(() => {
