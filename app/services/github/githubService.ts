@@ -216,4 +216,62 @@ export class GitHubService {
     const { data } = await this.octokit.rest.orgs.listForAuthenticatedUser();
     return data;
   }
+
+  // Notifications methods
+  async getNotifications(options?: {
+    all?: boolean;
+    participating?: boolean;
+    since?: string;
+    before?: string;
+    per_page?: number;
+    page?: number;
+  }) {
+    const { data } = await this.octokit.rest.activity.listNotificationsForAuthenticatedUser({
+      ...options
+    });
+    return data;
+  }
+
+  async getRepositoryNotifications(owner: string, repo: string, options?: {
+    all?: boolean;
+    participating?: boolean;
+    since?: string;
+    before?: string;
+    per_page?: number;
+    page?: number;
+  }) {
+    const { data } = await this.octokit.rest.activity.listRepoNotificationsForAuthenticatedUser({
+      owner,
+      repo,
+      ...options
+    });
+    return data;
+  }
+
+  async markNotificationAsRead(threadId: number) {
+    const { data } = await this.octokit.rest.activity.markThreadAsRead({
+      thread_id: threadId
+    });
+    return data;
+  }
+
+  async markAllNotificationsAsRead(options?: {
+    last_read_at?: string;
+  }) {
+    const { data } = await this.octokit.rest.activity.markNotificationsAsRead({
+      ...options
+    });
+    return data;
+  }
+
+  async markRepositoryNotificationsAsRead(owner: string, repo: string, options?: {
+    last_read_at?: string;
+  }) {
+    const { data } = await this.octokit.rest.activity.markRepoNotificationsAsRead({
+      owner,
+      repo,
+      ...options
+    });
+    return data;
+  }
 }

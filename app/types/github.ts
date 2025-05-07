@@ -153,3 +153,40 @@ export interface GitHubPullRequest {
     };
   };
 }
+
+// GitHub Notification Type
+export interface GitHubNotification {
+  id: string;
+  repository: {
+    id: number;
+    node_id: string;
+    name: string;
+    full_name: string;
+    private: boolean;
+    owner: {
+      login: string;
+      id: number;
+      node_id: string;
+      avatar_url: string;
+      gravatar_id: string;
+      url: string;
+      html_url: string;
+      type: string;
+    };
+    html_url: string;
+    description: string | null;
+    url: string;
+  };
+  subject: {
+    title: string;
+    url: string | null;
+    latest_comment_url: string | null;
+    type: string;
+  };
+  reason: string;
+  unread: boolean;
+  updated_at: string;
+  last_read_at: string | null;
+  url: string;
+  thread_id: number;
+}
