@@ -45,6 +45,39 @@ export class GitHubService {
     return data;
   }
 
+  async searchRepositories(options: {
+    query: string;
+    sort?: 'stars' | 'forks' | 'help-wanted-issues' | 'updated';
+    order?: 'asc' | 'desc';
+    per_page?: number;
+    page?: number;
+  }) {
+    const { data } = await this.octokit.rest.search.repos({
+      q: options.query,
+      sort: options.sort,
+      order: options.order,
+      per_page: options.per_page || 10,
+      page: options.page || 1
+    });
+    return data;
+  }
+
+  async getLanguages(owner: string, repo: string) {
+    const { data } = await this.octokit.rest.repos.listLanguages({
+      owner,
+      repo
+    });
+    return data;
+  }
+
+  async getTopics(owner: string, repo: string) {
+    const { data } = await this.octokit.rest.repos.getAllTopics({
+      owner,
+      repo
+    });
+    return data.names;
+  }
+
   // Issues methods
   async getIssues(owner: string, repo: string, page = 1, perPage = 10) {
     const { data } = await this.octokit.rest.issues.listForRepo({
