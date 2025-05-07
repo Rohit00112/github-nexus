@@ -307,4 +307,118 @@ export class GitHubService {
     });
     return data;
   }
+
+  // Gists methods
+  async getGists(page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.gists.list({
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getStarredGists(page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.gists.listStarred({
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getPublicGists(page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.gists.listPublic({
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getGist(gistId: string) {
+    const { data } = await this.octokit.rest.gists.get({
+      gist_id: gistId,
+    });
+    return data;
+  }
+
+  async createGist(options: {
+    description?: string;
+    files: Record<string, { content: string }>;
+    public?: boolean;
+  }) {
+    const { data } = await this.octokit.rest.gists.create({
+      description: options.description,
+      files: options.files,
+      public: options.public,
+    });
+    return data;
+  }
+
+  async updateGist(gistId: string, options: {
+    description?: string;
+    files: Record<string, { content: string } | null>;
+  }) {
+    const { data } = await this.octokit.rest.gists.update({
+      gist_id: gistId,
+      description: options.description,
+      files: options.files,
+    });
+    return data;
+  }
+
+  async deleteGist(gistId: string) {
+    const { data } = await this.octokit.rest.gists.delete({
+      gist_id: gistId,
+    });
+    return data;
+  }
+
+  async starGist(gistId: string) {
+    const { data } = await this.octokit.rest.gists.star({
+      gist_id: gistId,
+    });
+    return data;
+  }
+
+  async unstarGist(gistId: string) {
+    const { data } = await this.octokit.rest.gists.unstar({
+      gist_id: gistId,
+    });
+    return data;
+  }
+
+  async isGistStarred(gistId: string) {
+    try {
+      await this.octokit.rest.gists.checkIsStarred({
+        gist_id: gistId,
+      });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async getGistComments(gistId: string, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.gists.listComments({
+      gist_id: gistId,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async createGistComment(gistId: string, body: string) {
+    const { data } = await this.octokit.rest.gists.createComment({
+      gist_id: gistId,
+      body,
+    });
+    return data;
+  }
+
+  async deleteGistComment(gistId: string, commentId: number) {
+    const { data } = await this.octokit.rest.gists.deleteComment({
+      gist_id: gistId,
+      comment_id: commentId,
+    });
+    return data;
+  }
 }

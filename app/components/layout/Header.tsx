@@ -56,6 +56,9 @@ const Header: FC = () => {
               <Link href="/pull-requests" className="hover:text-gray-300 transition-colors">
                 Pull Requests
               </Link>
+              <Link href="/gists" className="hover:text-gray-300 transition-colors">
+                Gists
+              </Link>
               <Link href="/actions" className="hover:text-gray-300 transition-colors">
                 Actions
               </Link>
