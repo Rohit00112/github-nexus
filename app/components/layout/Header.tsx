@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { FC, useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import NotificationBell from '../notifications/NotificationBell';
+import HeaderSearchBar from '../ui/HeaderSearchBar';
 
 const Header: FC = () => {
   const { session, isAuthenticated, isLoading, signIn, signOut } = useAuth();
@@ -44,23 +45,27 @@ const Header: FC = () => {
         </div>
 
         {isAuthenticated && (
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/repositories" className="hover:text-gray-300 transition-colors">
-              Repositories
-            </Link>
-            <Link href="/issues" className="hover:text-gray-300 transition-colors">
-              Issues
-            </Link>
-            <Link href="/pull-requests" className="hover:text-gray-300 transition-colors">
-              Pull Requests
-            </Link>
-            <Link href="/actions" className="hover:text-gray-300 transition-colors">
-              Actions
-            </Link>
-            <Link href="/insights" className="hover:text-gray-300 transition-colors">
-              Insights
-            </Link>
-          </nav>
+          <div className="flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link href="/repositories" className="hover:text-gray-300 transition-colors">
+                Repositories
+              </Link>
+              <Link href="/issues" className="hover:text-gray-300 transition-colors">
+                Issues
+              </Link>
+              <Link href="/pull-requests" className="hover:text-gray-300 transition-colors">
+                Pull Requests
+              </Link>
+              <Link href="/actions" className="hover:text-gray-300 transition-colors">
+                Actions
+              </Link>
+              <Link href="/insights" className="hover:text-gray-300 transition-colors">
+                Insights
+              </Link>
+            </nav>
+
+            <HeaderSearchBar className="hidden md:block" />
+          </div>
         )}
 
         <div className="flex items-center space-x-4">
