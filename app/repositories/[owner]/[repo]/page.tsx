@@ -31,7 +31,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
   const [repository, setRepository] = useState<GitHubRepository | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"code" | "issues" | "pull-requests" | "actions" | "insights">("code");
+  const [activeTab, setActiveTab] = useState<"code" | "issues" | "pull-requests" | "actions" | "insights" | "analytics">("code");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -222,6 +222,15 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                   </svg>
                   Insights
                 </button>
+                <Link
+                  href={`/repositories/${ownerName}/${repoName}/insights`}
+                  className={`py-4 px-6 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                  </svg>
+                  Analytics
+                </Link>
               </nav>
             </div>
 

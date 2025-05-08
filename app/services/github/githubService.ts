@@ -421,4 +421,93 @@ export class GitHubService {
     });
     return data;
   }
+
+  // Repository Insights methods
+  async getCommitActivity(owner: string, repo: string) {
+    const { data } = await this.octokit.rest.repos.getCommitActivityStats({
+      owner,
+      repo,
+    });
+    return data;
+  }
+
+  async getCodeFrequency(owner: string, repo: string) {
+    const { data } = await this.octokit.rest.repos.getCodeFrequencyStats({
+      owner,
+      repo,
+    });
+    return data;
+  }
+
+  async getParticipation(owner: string, repo: string) {
+    const { data } = await this.octokit.rest.repos.getParticipationStats({
+      owner,
+      repo,
+    });
+    return data;
+  }
+
+  async getPunchCard(owner: string, repo: string) {
+    const { data } = await this.octokit.rest.repos.getPunchCardStats({
+      owner,
+      repo,
+    });
+    return data;
+  }
+
+  async getContributorsStats(owner: string, repo: string) {
+    const { data } = await this.octokit.rest.repos.getContributorsStats({
+      owner,
+      repo,
+    });
+    return data;
+  }
+
+  async getWeeklyCommitCount(owner: string, repo: string) {
+    const { data } = await this.octokit.rest.repos.getWeeklyCommitCount({
+      owner,
+      repo,
+    });
+    return data;
+  }
+
+  async getReleases(owner: string, repo: string, page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.repos.listReleases({
+      owner,
+      repo,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getBranches(owner: string, repo: string, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.repos.listBranches({
+      owner,
+      repo,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getTags(owner: string, repo: string, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.repos.listTags({
+      owner,
+      repo,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getContributors(owner: string, repo: string, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.repos.listContributors({
+      owner,
+      repo,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
 }
