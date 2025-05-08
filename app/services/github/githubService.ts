@@ -510,4 +510,139 @@ export class GitHubService {
     });
     return data;
   }
+
+  // Code Review methods
+  async getPullRequestReviews(owner: string, repo: string, pull_number: number) {
+    const { data } = await this.octokit.rest.pulls.listReviews({
+      owner,
+      repo,
+      pull_number,
+    });
+    return data;
+  }
+
+  async getPullRequestReviewComments(owner: string, repo: string, pull_number: number, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.pulls.listReviewComments({
+      owner,
+      repo,
+      pull_number,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async createPullRequestReview(owner: string, repo: string, pull_number: number, options: {
+    commit_id?: string;
+    body?: string;
+    event?: "APPROVE" | "REQUEST_CHANGES" | "COMMENT";
+    comments?: Array<{
+      path: string;
+      position: number;
+      body: string;
+    }>;
+  }) {
+    const { data } = await this.octokit.rest.pulls.createReview({
+      owner,
+      repo,
+      pull_number,
+      ...options,
+    });
+    return data;
+  }
+
+  async submitPullRequestReview(owner: string, repo: string, pull_number: number, review_id: number, options: {
+    body?: string;
+    event: "APPROVE" | "REQUEST_CHANGES" | "COMMENT";
+  }) {
+    const { data } = await this.octokit.rest.pulls.submitReview({
+      owner,
+      repo,
+      pull_number,
+      review_id,
+      ...options,
+    });
+    return data;
+  }
+
+  async dismissPullRequestReview(owner: string, repo: string, pull_number: number, review_id: number, message: string) {
+    const { data } = await this.octokit.rest.pulls.dismissReview({
+      owner,
+      repo,
+      pull_number,
+      review_id,
+      message,
+    });
+    return data;
+  }
+
+  async getPullRequestReviewRequests(owner: string, repo: string, pull_number: number) {
+    const { data } = await this.octokit.rest.pulls.listRequestedReviewers({
+      owner,
+      repo,
+      pull_number,
+    });
+    return data;
+  }
+
+  async requestPullRequestReviewers(owner: string, repo: string, pull_number: number, options: {
+    reviewers?: string[];
+    team_reviewers?: string[];
+  }) {
+    const { data } = await this.octokit.rest.pulls.requestReviewers({
+      owner,
+      repo,
+      pull_number,
+      ...options,
+    });
+    return data;
+  }
+
+  async removePullRequestReviewers(owner: string, repo: string, pull_number: number, options: {
+    reviewers?: string[];
+    team_reviewers?: string[];
+  }) {
+    const { data } = await this.octokit.rest.pulls.removeRequestedReviewers({
+      owner,
+      repo,
+      pull_number,
+      ...options,
+    });
+    return data;
+  }
+
+  async getPullRequestFiles(owner: string, repo: string, pull_number: number) {
+    const { data } = await this.octokit.rest.pulls.listFiles({
+      owner,
+      repo,
+      pull_number,
+    });
+    return data;
+  }
+
+  async getPendingReviews(owner: string, repo: string, page = 1, perPage = 10) {
+    // Get open pull requests
+    const pullRequests = await this.getPullRequests(owner, repo, page, perPage);
+
+    // Filter to only include PRs where the authenticated user is a requested reviewer
+    const pendingReviews = [];
+
+    for (const pr of pullRequests) {
+      if (pr.state !== 'open') continue;
+
+      const reviewRequests = await this.getPullRequestReviewRequests(owner, repo, pr.number);
+      const user = await this.getCurrentUser();
+
+      const isReviewer = reviewRequests.reviewers?.some(reviewer => reviewer.login === user.login);
+
+      if (isReviewer) {
+        pendingReviews.push({
+          ...pr,
+          requested_at: pr.created_at, // GitHub API doesn't provide when the review was requested
+        });
+      }
+    }
+
+    return pendingReviews;
+  }
 }
