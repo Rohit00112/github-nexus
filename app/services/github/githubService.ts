@@ -645,4 +645,169 @@ export class GitHubService {
 
     return pendingReviews;
   }
+
+  // Team Collaboration methods
+  async getOrganizationTeams(org: string, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.teams.list({
+      org,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getTeam(org: string, team_slug: string) {
+    const { data } = await this.octokit.rest.teams.getByName({
+      org,
+      team_slug,
+    });
+    return data;
+  }
+
+  async getTeamMembers(org: string, team_slug: string, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.teams.listMembersInOrg({
+      org,
+      team_slug,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getTeamRepositories(org: string, team_slug: string, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.teams.listReposInOrg({
+      org,
+      team_slug,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getUserContributions(username: string, from?: Date, to?: Date) {
+    // GitHub API doesn't provide a direct endpoint for user contributions
+    // We'll use a combination of endpoints to gather this data
+
+    // Get user's repositories
+    const repos = await this.octokit.rest.repos.listForUser({
+      username,
+      per_page: 100,
+      sort: "updated",
+    });
+
+    const contributions = {
+      commits: 0,
+      pullRequests: 0,
+      issues: 0,
+      reviews: 0,
+      repositories: repos.data.length,
+    };
+
+    // For each repository, get the user's contributions
+    // Limit to 5 most recently updated repos to avoid rate limiting
+    const recentRepos = repos.data.slice(0, 5);
+
+    for (const repo of recentRepos) {
+      // Get commits by user
+      try {
+        const commits = await this.octokit.rest.repos.listCommits({
+          owner: repo.owner.login,
+          repo: repo.name,
+          author: username,
+          per_page: 100,
+        });
+        contributions.commits += commits.data.length;
+      } catch (error) {
+        console.error(`Error fetching commits for ${repo.full_name}:`, error);
+      }
+
+      // Get pull requests by user
+      try {
+        const pulls = await this.octokit.rest.pulls.list({
+          owner: repo.owner.login,
+          repo: repo.name,
+          state: "all",
+          per_page: 100,
+        });
+        const userPulls = pulls.data.filter(pr => pr.user?.login === username);
+        contributions.pullRequests += userPulls.length;
+      } catch (error) {
+        console.error(`Error fetching pull requests for ${repo.full_name}:`, error);
+      }
+
+      // Get issues by user
+      try {
+        const issues = await this.octokit.rest.issues.listForRepo({
+          owner: repo.owner.login,
+          repo: repo.name,
+          creator: username,
+          state: "all",
+          per_page: 100,
+        });
+        // Filter out pull requests (GitHub API returns PRs as issues)
+        const actualIssues = issues.data.filter(issue => !issue.pull_request);
+        contributions.issues += actualIssues.length;
+      } catch (error) {
+        console.error(`Error fetching issues for ${repo.full_name}:`, error);
+      }
+    }
+
+    return contributions;
+  }
+
+  async getTeamContributions(org: string, team_slug: string) {
+    // Get team members
+    const members = await this.getTeamMembers(org, team_slug);
+
+    // Get team repositories
+    const repositories = await this.getTeamRepositories(org, team_slug);
+
+    // Get contributions for each member
+    const memberContributions = await Promise.all(
+      members.map(async (member) => {
+        const contributions = await this.getUserContributions(member.login);
+        return {
+          member,
+          contributions,
+        };
+      })
+    );
+
+    // Calculate team totals
+    const teamTotals = memberContributions.reduce(
+      (totals, { contributions }) => {
+        totals.commits += contributions.commits;
+        totals.pullRequests += contributions.pullRequests;
+        totals.issues += contributions.issues;
+        totals.reviews += contributions.reviews;
+        return totals;
+      },
+      { commits: 0, pullRequests: 0, issues: 0, reviews: 0 }
+    );
+
+    return {
+      members: memberContributions,
+      repositories: repositories.length,
+      totals: teamTotals,
+    };
+  }
+
+  async getOrganizationMembers(org: string, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.orgs.listMembers({
+      org,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getTeamDiscussions(org: string, team_slug: string, page = 1, perPage = 30) {
+    const { data } = await this.octokit.rest.teams.listDiscussionsInOrg({
+      org,
+      team_slug,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
 }
