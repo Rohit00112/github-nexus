@@ -5,6 +5,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useNotifications } from '../../context/NotificationsContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Button,
+  Badge,
+  Spinner,
+  Divider
+} from "@nextui-org/react";
 
 interface NotificationBellProps {
   className?: string;
@@ -136,115 +145,141 @@ const NotificationBell: FC<NotificationBellProps> = ({ className = "" }) => {
   }, [isOpen]);
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative"
-        aria-label="Notifications"
-        title="Notifications"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-        </svg>
-
-        {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 overflow-hidden">
-          <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between items-center">
-            <h3 className="font-medium">Notifications</h3>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={handleRefresh}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                disabled={localLoading || isLoading}
-                title="Refresh notifications"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${(localLoading || isLoading) ? 'animate-spin' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                </svg>
-              </button>
-              <Link
-                href="/notifications"
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                onClick={() => setIsOpen(false)}
-              >
-                See all
-              </Link>
-            </div>
-          </div>
-
-          <div className="max-h-96 overflow-y-auto">
-            {(isLoading || localLoading) ? (
-              <div className="flex justify-center items-center py-8">
-                <LoadingSpinner size="small" />
-              </div>
-            ) : error ? (
-              <div className="py-8 text-center">
-                <p className="text-red-500 dark:text-red-400 mb-2">{error}</p>
-                <button
-                  onClick={handleRefresh}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Try again
-                </button>
-              </div>
-            ) : notifications.length > 0 ? (
-              <div>
-                {notifications.slice(0, 5).map(notification => (
-                  <Link
-                    key={notification.id}
-                    href={getNotificationUrl(notification)}
-                    onClick={() => handleNotificationClick(notification)}
-                    className={`block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 last:border-0 ${
-                      notification.unread ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                    }`}
-                  >
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 mr-3">
-                        {getNotificationIcon(notification.subject.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {notification.subject.title}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {notification.repository.full_name} • {formatTime(notification.updated_at)}
-                        </p>
-                      </div>
-                      {notification.unread && (
-                        <div className="ml-2 flex-shrink-0">
-                          <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                <p>No notifications</p>
-              </div>
-            )}
-          </div>
-
-          <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2">
-            <Link
-              href="/settings/notifications"
-              className="text-xs text-gray-500 dark:text-gray-400 hover:underline block text-center"
+    <Popover
+      placement="bottom-end"
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      classNames={{
+        content: "p-0 glass"
+      }}
+    >
+      <PopoverTrigger>
+        <div className={className}>
+          <Badge
+            content={unreadCount > 99 ? '99+' : unreadCount}
+            color="danger"
+            isInvisible={unreadCount === 0}
+            shape="circle"
+            size="sm"
+          >
+            <Button
+              isIconOnly
+              variant="light"
+              aria-label="Notifications"
+              title="Notifications"
+              radius="full"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+              </svg>
+            </Button>
+          </Badge>
+        </div>
+      </PopoverTrigger>
+      <PopoverContent className="w-80">
+        <div className="px-4 py-3 flex justify-between items-center">
+          <h3 className="text-medium font-medium">Notifications</h3>
+          <div className="flex items-center gap-2">
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              onClick={handleRefresh}
+              isLoading={localLoading || isLoading}
+              title="Refresh notifications"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+              </svg>
+            </Button>
+            <Button
+              as={Link}
+              href="/notifications"
+              size="sm"
+              variant="light"
+              color="primary"
               onClick={() => setIsOpen(false)}
             >
-              Notification settings
-            </Link>
+              See all
+            </Button>
           </div>
         </div>
-      )}
-    </div>
+
+        <Divider />
+
+        <div className="max-h-96 overflow-y-auto">
+          {(isLoading || localLoading) ? (
+            <div className="flex justify-center items-center py-8">
+              <Spinner size="sm" />
+            </div>
+          ) : error ? (
+            <div className="py-8 text-center">
+              <p className="text-danger mb-2">{error}</p>
+              <Button
+                size="sm"
+                variant="flat"
+                color="primary"
+                onClick={handleRefresh}
+              >
+                Try again
+              </Button>
+            </div>
+          ) : notifications.length > 0 ? (
+            <div>
+              {notifications.slice(0, 5).map(notification => (
+                <Link
+                  key={notification.id}
+                  href={getNotificationUrl(notification)}
+                  onClick={() => handleNotificationClick(notification)}
+                  className={`block px-4 py-3 hover:bg-default-100 dark:hover:bg-default-50/10 ${
+                    notification.unread ? 'bg-primary-50/30 dark:bg-primary-900/20' : ''
+                  }`}
+                >
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 mr-3">
+                      {getNotificationIcon(notification.subject.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {notification.subject.title}
+                      </p>
+                      <p className="text-xs text-default-500 mt-1">
+                        {notification.repository.full_name} • {formatTime(notification.updated_at)}
+                      </p>
+                    </div>
+                    {notification.unread && (
+                      <div className="ml-2 flex-shrink-0">
+                        <span className="inline-block w-2 h-2 bg-primary rounded-full"></span>
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-default-500">
+              <p>No notifications</p>
+            </div>
+          )}
+        </div>
+
+        <Divider />
+
+        <div className="px-4 py-2">
+          <Button
+            as={Link}
+            href="/settings/notifications"
+            size="sm"
+            variant="light"
+            className="w-full"
+            onClick={() => setIsOpen(false)}
+          >
+            Notification settings
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 

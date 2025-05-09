@@ -810,4 +810,221 @@ export class GitHubService {
     });
     return data;
   }
+
+  // GitHub Projects methods
+  async getOrganizationProjects(org: string, page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.projects.listForOrg({
+      org,
+      per_page: perPage,
+      page,
+      state: 'open',
+    });
+    return data;
+  }
+
+  async getUserProjects(username: string, page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.projects.listForUser({
+      username,
+      per_page: perPage,
+      page,
+      state: 'open',
+    });
+    return data;
+  }
+
+  async getRepositoryProjects(owner: string, repo: string, page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.projects.listForRepo({
+      owner,
+      repo,
+      per_page: perPage,
+      page,
+      state: 'open',
+    });
+    return data;
+  }
+
+  async getProject(project_id: number) {
+    const { data } = await this.octokit.rest.projects.get({
+      project_id,
+    });
+    return data;
+  }
+
+  async createProject(options: {
+    owner: string;
+    repo?: string;
+    name: string;
+    body?: string;
+    org?: string;
+  }) {
+    if (options.org) {
+      const { data } = await this.octokit.rest.projects.createForOrg({
+        org: options.org,
+        name: options.name,
+        body: options.body,
+      });
+      return data;
+    } else if (options.repo) {
+      const { data } = await this.octokit.rest.projects.createForRepo({
+        owner: options.owner,
+        repo: options.repo,
+        name: options.name,
+        body: options.body,
+      });
+      return data;
+    } else {
+      const { data } = await this.octokit.rest.projects.createForAuthenticatedUser({
+        name: options.name,
+        body: options.body,
+      });
+      return data;
+    }
+  }
+
+  async updateProject(project_id: number, options: {
+    name?: string;
+    body?: string;
+    state?: 'open' | 'closed';
+    organization_permission?: 'read' | 'write' | 'admin' | 'none';
+    private?: boolean;
+  }) {
+    const { data } = await this.octokit.rest.projects.update({
+      project_id,
+      ...options,
+    });
+    return data;
+  }
+
+  async deleteProject(project_id: number) {
+    const { data } = await this.octokit.rest.projects.delete({
+      project_id,
+    });
+    return data;
+  }
+
+  async getProjectColumns(project_id: number) {
+    const { data } = await this.octokit.rest.projects.listColumns({
+      project_id,
+    });
+    return data;
+  }
+
+  async getProjectColumn(column_id: number) {
+    const { data } = await this.octokit.rest.projects.getColumn({
+      column_id,
+    });
+    return data;
+  }
+
+  async createProjectColumn(project_id: number, name: string) {
+    const { data } = await this.octokit.rest.projects.createColumn({
+      project_id,
+      name,
+    });
+    return data;
+  }
+
+  async updateProjectColumn(column_id: number, name: string) {
+    const { data } = await this.octokit.rest.projects.updateColumn({
+      column_id,
+      name,
+    });
+    return data;
+  }
+
+  async deleteProjectColumn(column_id: number) {
+    const { data } = await this.octokit.rest.projects.deleteColumn({
+      column_id,
+    });
+    return data;
+  }
+
+  async moveProjectColumn(column_id: number, position: 'first' | 'last' | 'after:' | string) {
+    const { data } = await this.octokit.rest.projects.moveColumn({
+      column_id,
+      position,
+    });
+    return data;
+  }
+
+  async getColumnCards(column_id: number, page = 1, perPage = 100) {
+    const { data } = await this.octokit.rest.projects.listCards({
+      column_id,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
+  async getCard(card_id: number) {
+    const { data } = await this.octokit.rest.projects.getCard({
+      card_id,
+    });
+    return data;
+  }
+
+  async createCard(column_id: number, options: {
+    note?: string;
+    content_id?: number;
+    content_type?: 'Issue' | 'PullRequest';
+  }) {
+    const { data } = await this.octokit.rest.projects.createCard({
+      column_id,
+      ...options,
+    });
+    return data;
+  }
+
+  async updateCard(card_id: number, note: string) {
+    const { data } = await this.octokit.rest.projects.updateCard({
+      card_id,
+      note,
+    });
+    return data;
+  }
+
+  async deleteCard(card_id: number) {
+    const { data } = await this.octokit.rest.projects.deleteCard({
+      card_id,
+    });
+    return data;
+  }
+
+  async moveCard(card_id: number, position: 'top' | 'bottom' | 'after:' | string, column_id?: number) {
+    const { data } = await this.octokit.rest.projects.moveCard({
+      card_id,
+      position,
+      column_id,
+    });
+    return data;
+  }
+
+  async getAllUserProjects() {
+    const user = await this.getCurrentUser();
+    return this.getUserProjects(user.login, 1, 100);
+  }
+
+  async getAllOrganizationProjects() {
+    const orgs = await this.getUserOrganizations();
+    let allProjects: any[] = [];
+
+    for (const org of orgs) {
+      const projects = await this.getOrganizationProjects(org.login, 1, 100);
+      allProjects = [...allProjects, ...projects];
+    }
+
+    return allProjects;
+  }
+
+  async getAllRepositoryProjects() {
+    const repos = await this.getUserRepositories();
+    let allProjects: any[] = [];
+
+    for (const repo of repos) {
+      const projects = await this.getRepositoryProjects(repo.owner.login, repo.name, 1, 100);
+      allProjects = [...allProjects, ...projects];
+    }
+
+    return allProjects;
+  }
 }
