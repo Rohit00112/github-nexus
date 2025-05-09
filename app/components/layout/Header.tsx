@@ -6,6 +6,19 @@ import { FC, useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import NotificationBell from '../notifications/NotificationBell';
 import HeaderSearchBar from '../ui/HeaderSearchBar';
+import {
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Avatar,
+  Button
+} from "@nextui-org/react";
+import ThemeToggle from '../ui/ThemeToggle';
 
 const Header: FC = () => {
   const { session, isAuthenticated, isLoading, signIn, signOut } = useAuth();
@@ -27,120 +40,129 @@ const Header: FC = () => {
   }, []);
 
   return (
-    <header className="bg-gray-900 text-white shadow-md">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 relative">
-              <Image
-                src="/logo.svg"
-                alt="GitHub Nexus Logo"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
-            <span className="text-xl font-bold">GitHub Nexus</span>
-          </Link>
-        </div>
-
-        {isAuthenticated && (
-          <div className="flex items-center space-x-6">
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/repositories" className="hover:text-gray-300 transition-colors">
-                Repositories
-              </Link>
-              <Link href="/issues" className="hover:text-gray-300 transition-colors">
-                Issues
-              </Link>
-              <Link href="/pull-requests" className="hover:text-gray-300 transition-colors">
-                Pull Requests
-              </Link>
-              <Link href="/gists" className="hover:text-gray-300 transition-colors">
-                Gists
-              </Link>
-              <Link href="/code-review" className="hover:text-gray-300 transition-colors">
-                Code Review
-              </Link>
-              <Link href="/actions" className="hover:text-gray-300 transition-colors">
-                Actions
-              </Link>
-              <Link href="/insights" className="hover:text-gray-300 transition-colors">
-                Insights
-              </Link>
-            </nav>
-
-            <HeaderSearchBar className="hidden md:block" />
+    <Navbar
+      maxWidth="xl"
+      className="bg-background/70 dark:bg-background/70 backdrop-blur-md border-b border-divider"
+      classNames={{
+        wrapper: "px-4 sm:px-6",
+      }}
+    >
+      <NavbarBrand>
+        <Link href="/" className="flex items-center space-x-2">
+          <div className="w-8 h-8 relative">
+            <Image
+              src="/logo.svg"
+              alt="GitHub Nexus Logo"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
-        )}
+          <span className="text-xl font-bold">GitHub Nexus</span>
+        </Link>
+      </NavbarBrand>
 
-        <div className="flex items-center space-x-4">
-          {isAuthenticated ? (
-            <>
+      {isAuthenticated && (
+        <NavbarContent className="hidden md:flex gap-4" justify="center">
+          <NavbarItem>
+            <Link href="/repositories" className="text-foreground/80 hover:text-foreground transition-colors">
+              Repositories
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href="/issues" className="text-foreground/80 hover:text-foreground transition-colors">
+              Issues
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href="/pull-requests" className="text-foreground/80 hover:text-foreground transition-colors">
+              Pull Requests
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href="/gists" className="text-foreground/80 hover:text-foreground transition-colors">
+              Gists
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href="/code-review" className="text-foreground/80 hover:text-foreground transition-colors">
+              Code Review
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href="/projects" className="text-foreground/80 hover:text-foreground transition-colors">
+              Projects
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href="/actions" className="text-foreground/80 hover:text-foreground transition-colors">
+              Actions
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href="/insights" className="text-foreground/80 hover:text-foreground transition-colors">
+              Insights
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href="/team" className="text-foreground/80 hover:text-foreground transition-colors">
+              Team
+            </Link>
+          </NavbarItem>
+        </NavbarContent>
+      )}
+
+      <NavbarContent justify="end">
+        <NavbarItem>
+          <ThemeToggle />
+        </NavbarItem>
+
+        {isAuthenticated ? (
+          <>
+            <NavbarItem>
               <NotificationBell />
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-700 focus:outline-none focus:border-blue-500"
-                >
-                  {session?.user?.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name || "User"}
-                      width={32}
-                      height={32}
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-500 flex items-center justify-center text-white">
-                      {session?.user?.name?.charAt(0) || "U"}
-                    </div>
-                  )}
-                </button>
-
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50">
-                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{session?.user?.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{session?.user?.email}</p>
-                    </div>
-                    <Link
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Your Profile
-                    </Link>
-                    <Link
-                      href="/settings"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Settings
-                    </Link>
-                    <div className="border-t border-gray-200 dark:border-gray-700"></div>
-                    <Link
-                      href="/auth/signout"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Sign out
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <Link
+            </NavbarItem>
+            <Dropdown placement="bottom-end">
+              <DropdownTrigger>
+                <Avatar
+                  as="button"
+                  className="transition-transform"
+                  src={session?.user?.image || undefined}
+                  name={session?.user?.name?.charAt(0) || "U"}
+                  size="sm"
+                />
+              </DropdownTrigger>
+              <DropdownMenu aria-label="User menu" variant="flat">
+                <DropdownItem key="profile" textValue="Profile" className="h-14 gap-2">
+                  <p className="font-semibold">{session?.user?.name}</p>
+                  <p className="text-xs text-default-500">{session?.user?.email}</p>
+                </DropdownItem>
+                <DropdownItem key="profile-page">
+                  <Link href="/profile" className="w-full">Your Profile</Link>
+                </DropdownItem>
+                <DropdownItem key="settings">
+                  <Link href="/settings" className="w-full">Settings</Link>
+                </DropdownItem>
+                <DropdownItem key="logout" color="danger">
+                  <Link href="/auth/signout" className="w-full">Sign out</Link>
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          </>
+        ) : (
+          <NavbarItem>
+            <Button
+              as={Link}
               href="/auth/signin"
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+              color="primary"
+              variant="flat"
             >
               Sign in
-            </Link>
-          )}
-        </div>
-      </div>
-    </header>
+            </Button>
+          </NavbarItem>
+        )}
+      </NavbarContent>
+    </Navbar>
   );
 };
 

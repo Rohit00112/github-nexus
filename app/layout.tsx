@@ -4,6 +4,8 @@ import "./globals.css";
 import AuthContext from "./context/AuthContext";
 import { GitHubProvider } from "./context/GitHubContext";
 import { NotificationsProvider } from "./context/NotificationsContext";
+import { NextUIProvider } from "@nextui-org/react";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,14 +31,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="light">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthContext>
           <GitHubProvider>
             <NotificationsProvider>
-              {children}
+              <ThemeProvider>
+                <NextUIProvider>
+                  {children}
+                </NextUIProvider>
+              </ThemeProvider>
             </NotificationsProvider>
           </GitHubProvider>
         </AuthContext>

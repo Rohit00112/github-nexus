@@ -1,8 +1,16 @@
 "use client";
 
 import Link from 'next/link';
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { usePathname } from 'next/navigation';
+import {
+  Listbox,
+  ListboxItem,
+  Button,
+  Divider,
+  ScrollShadow
+} from "@nextui-org/react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -114,6 +122,19 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
                       <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
                     <span>Code Review</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/projects"
+                    className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 transition-colors"
+                    onClick={() => onClose()}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5z" clipRule="evenodd" />
+                      <path d="M7 7h2v2H7V7zm0 4h2v2H7v-2zm4-4h2v2h-2V7zm0 4h2v2h-2v-2z" />
+                    </svg>
+                    <span>Projects</span>
                   </Link>
                 </li>
                 <li>
