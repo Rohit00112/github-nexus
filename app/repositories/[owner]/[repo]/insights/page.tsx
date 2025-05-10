@@ -8,6 +8,7 @@ import CodeFrequencyChart from "../../../../components/insights/CodeFrequencyCha
 import ContributorsChart from "../../../../components/insights/ContributorsChart";
 import PunchCardChart from "../../../../components/insights/PunchCardChart";
 import RepositoryStatsCard from "../../../../components/insights/RepositoryStatsCard";
+import GraphQLRepositoryInsights from "../../../../components/insights/GraphQLRepositoryInsights";
 import Link from "next/link";
 
 export default function RepositoryInsightsPage() {
@@ -18,6 +19,7 @@ export default function RepositoryInsightsPage() {
 
   const tabs = [
     { id: "overview", label: "Overview" },
+    { id: "graphql", label: "GraphQL Insights" },
     { id: "commits", label: "Commit Activity" },
     { id: "code", label: "Code Frequency" },
     { id: "contributors", label: "Contributors" },
@@ -75,7 +77,7 @@ export default function RepositoryInsightsPage() {
         {activeTab === "overview" && (
           <div className="space-y-6">
             <RepositoryStatsCard owner={ownerName} repo={repoName} />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-lg font-semibold mb-4">Commit Activity</h3>
@@ -126,6 +128,16 @@ export default function RepositoryInsightsPage() {
               View when commits are made to this repository. The size of each circle represents the number of commits made during that hour and day of the week.
             </p>
             <PunchCardChart owner={ownerName} repo={repoName} />
+          </div>
+        )}
+
+        {activeTab === "graphql" && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">GraphQL Repository Insights</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              View detailed repository information fetched using GitHub's GraphQL API for improved performance and reduced API calls.
+            </p>
+            <GraphQLRepositoryInsights owner={ownerName} repo={repoName} />
           </div>
         )}
       </div>
