@@ -1,13 +1,30 @@
 import { Octokit } from "octokit";
+import { AuthCredentials, AuthMethod, AuthService } from "../auth/authService";
 
 export class GitHubService {
   // Make octokit public so components can access it directly
   public octokit: Octokit;
+  private authMethod: AuthMethod;
 
-  constructor(accessToken: string) {
-    this.octokit = new Octokit({
-      auth: accessToken,
-    });
+  constructor(accessTokenOrCredentials: string | AuthCredentials) {
+    if (typeof accessTokenOrCredentials === 'string') {
+      // Legacy constructor with just an access token (OAuth)
+      this.octokit = new Octokit({
+        auth: accessTokenOrCredentials,
+      });
+      this.authMethod = AuthMethod.OAUTH;
+    } else {
+      // New constructor with auth credentials
+      this.octokit = AuthService.createOctokit(accessTokenOrCredentials);
+      this.authMethod = accessTokenOrCredentials.method;
+    }
+  }
+
+  /**
+   * Get the authentication method used by this service
+   */
+  getAuthMethod(): AuthMethod {
+    return this.authMethod;
   }
 
   // User methods
