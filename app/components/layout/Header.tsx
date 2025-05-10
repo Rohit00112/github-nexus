@@ -6,6 +6,7 @@ import { FC, useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import NotificationBell from '../notifications/NotificationBell';
 import HeaderSearchBar from '../ui/HeaderSearchBar';
+import AuthMethodBadge from '../ui/AuthMethodBadge';
 import {
   Navbar,
   NavbarBrand,
@@ -119,6 +120,9 @@ const Header: FC = () => {
 
         {isAuthenticated ? (
           <>
+            <NavbarItem>
+              <AuthMethodBadge />
+            </NavbarItem>
             <NavbarItem>
               <NotificationBell />
             </NavbarItem>
