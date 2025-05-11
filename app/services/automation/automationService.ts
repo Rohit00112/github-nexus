@@ -1,12 +1,12 @@
 "use client";
 
-import { 
-  AutomationRule, 
-  ConditionGroup, 
-  Condition, 
-  ConditionType, 
-  ConditionOperator, 
-  Action, 
+import {
+  AutomationRule,
+  ConditionGroup,
+  Condition,
+  ConditionType,
+  ConditionOperator,
+  Action,
   ActionType,
   RuleExecutionResult,
   AutomationResourceType
@@ -38,6 +38,11 @@ export class AutomationService {
           console.error('Failed to parse saved automation rules:', error);
           this.rules = [];
         }
+      } else {
+        // Initialize with empty array if no rules found
+        this.rules = [];
+        // Save empty array to localStorage to initialize it
+        this.saveRules();
       }
     }
   }
@@ -55,7 +60,17 @@ export class AutomationService {
    * Get all rules
    */
   getRules(): AutomationRule[] {
+    // Refresh rules from localStorage before returning
+    this.loadRules();
     return [...this.rules];
+  }
+
+  /**
+   * Manually refresh rules from localStorage
+   */
+  refreshRules(): AutomationRule[] {
+    this.loadRules();
+    return this.getRules();
   }
 
   /**
@@ -105,12 +120,12 @@ export class AutomationService {
   deleteRule(id: string): boolean {
     const initialLength = this.rules.length;
     this.rules = this.rules.filter(rule => rule.id !== id);
-    
+
     if (this.rules.length !== initialLength) {
       this.saveRules();
       return true;
     }
-    
+
     return false;
   }
 
@@ -134,14 +149,14 @@ export class AutomationService {
     const results: RuleExecutionResult[] = [];
 
     // Filter rules that apply to issues
-    const applicableRules = this.rules.filter(rule => 
-      rule.enabled && 
+    const applicableRules = this.rules.filter(rule =>
+      rule.enabled &&
       (rule.resourceType === AutomationResourceType.ISSUE || rule.resourceType === AutomationResourceType.BOTH) &&
       (!rule.repositories || rule.repositories.includes(`${owner}/${repo}`))
     );
 
     // Sort rules by runOrder if specified
-    const sortedRules = [...applicableRules].sort((a, b) => 
+    const sortedRules = [...applicableRules].sort((a, b) =>
       (a.runOrder || Number.MAX_SAFE_INTEGER) - (b.runOrder || Number.MAX_SAFE_INTEGER)
     );
 
@@ -166,14 +181,14 @@ export class AutomationService {
     const results: RuleExecutionResult[] = [];
 
     // Filter rules that apply to pull requests
-    const applicableRules = this.rules.filter(rule => 
-      rule.enabled && 
+    const applicableRules = this.rules.filter(rule =>
+      rule.enabled &&
       (rule.resourceType === AutomationResourceType.PULL_REQUEST || rule.resourceType === AutomationResourceType.BOTH) &&
       (!rule.repositories || rule.repositories.includes(`${owner}/${repo}`))
     );
 
     // Sort rules by runOrder if specified
-    const sortedRules = [...applicableRules].sort((a, b) => 
+    const sortedRules = [...applicableRules].sort((a, b) =>
       (a.runOrder || Number.MAX_SAFE_INTEGER) - (b.runOrder || Number.MAX_SAFE_INTEGER)
     );
 
