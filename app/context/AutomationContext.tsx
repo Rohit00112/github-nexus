@@ -54,7 +54,7 @@ export function AutomationProvider({ children }: AutomationProviderProps) {
       const automation = new AutomationService(githubService);
       const matching = new RuleMatchingService();
       const action = new RuleActionService(githubService);
-      
+
       setAutomationService(automation);
       setRuleMatchingService(matching);
       setRuleActionService(action);
@@ -63,6 +63,42 @@ export function AutomationProvider({ children }: AutomationProviderProps) {
     }
   }, [githubService, isGitHubLoading]);
 
+  // Add a listener for localStorage changes to refresh rules
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'automationRules' && automationService) {
+        // Refresh rules from the automation service
+        setRules(automationService.refreshRules());
+      }
+    };
+
+    // Function to refresh rules from localStorage
+    const refreshRules = () => {
+      if (automationService) {
+        setRules(automationService.refreshRules());
+      }
+    };
+
+    // Add event listener for storage changes
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+
+      // Set up periodic refresh to ensure rules are always up to date
+      const refreshInterval = setInterval(refreshRules, 5000); // Refresh every 5 seconds
+
+      // Initial refresh
+      refreshRules();
+
+      // Cleanup function to remove event listener and clear interval
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        clearInterval(refreshInterval);
+      };
+    }
+
+    return undefined;
+  }, [automationService]);
+
   const createRule = async (rule: Omit<AutomationRule, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>): Promise<AutomationRule> => {
     if (!automationService) {
       throw new Error("Automation service not initialized");
@@ -70,12 +106,12 @@ export function AutomationProvider({ children }: AutomationProviderProps) {
 
     // Get the current user's login
     const { data: user } = await githubService.octokit.rest.users.getAuthenticated();
-    
+
     const newRule = automationService.createRule({
       ...rule,
       createdBy: user.login,
     });
-    
+
     setRules(automationService.getRules());
     return newRule;
   };
@@ -84,12 +120,12 @@ export function AutomationProvider({ children }: AutomationProviderProps) {
     if (!automationService) {
       throw new Error("Automation service not initialized");
     }
-    
+
     const updatedRule = automationService.updateRule(id, updates);
     if (updatedRule) {
       setRules(automationService.getRules());
     }
-    
+
     return updatedRule;
   };
 
@@ -97,12 +133,12 @@ export function AutomationProvider({ children }: AutomationProviderProps) {
     if (!automationService) {
       throw new Error("Automation service not initialized");
     }
-    
+
     const result = automationService.deleteRule(id);
     if (result) {
       setRules(automationService.getRules());
     }
-    
+
     return result;
   };
 
@@ -110,7 +146,7 @@ export function AutomationProvider({ children }: AutomationProviderProps) {
     if (!automationService) {
       throw new Error("Automation service not initialized");
     }
-    
+
     return automationService.executeRulesForIssue(owner, repo, issueNumber);
   };
 
@@ -118,7 +154,7 @@ export function AutomationProvider({ children }: AutomationProviderProps) {
     if (!automationService) {
       throw new Error("Automation service not initialized");
     }
-    
+
     return automationService.executeRulesForPullRequest(owner, repo, pullNumber);
   };
 
