@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useGitHub } from "../../context/GitHubContext";
+import { Draggable } from "react-beautiful-dnd";
 import ProjectCard from "./ProjectCard";
+import LinkItemModal from "./LinkItemModal";
 
 interface ProjectColumnProps {
   column: {
@@ -28,7 +30,8 @@ interface ProjectColumnProps {
   onUpdateColumn: (columnId: number, name: string) => void;
   onAddCard: (columnId: number) => void;
   onDeleteCard: (cardId: number) => void;
-  onMoveCard: (cardId: number, columnId: number, position: string) => void;
+  onMoveCard?: (cardId: number, columnId: number, position: string) => void;
+  isDraggable?: boolean;
 }
 
 export default function ProjectColumn({
@@ -39,18 +42,20 @@ export default function ProjectColumn({
   onAddCard,
   onDeleteCard,
   onMoveCard,
+  isDraggable = false,
 }: ProjectColumnProps) {
   const { githubService } = useGitHub();
   const [isEditing, setIsEditing] = useState(false);
   const [columnName, setColumnName] = useState(column.name);
   const [isLoading, setIsLoading] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);
+  const [showLinkItemModal, setShowLinkItemModal] = useState(false);
   const [newCardNote, setNewCardNote] = useState("");
 
   // Handle column name update
   const handleUpdateColumn = async () => {
     if (!githubService || !columnName.trim()) return;
-    
+
     try {
       setIsLoading(true);
       await githubService.updateProjectColumn(column.id, columnName);
@@ -67,7 +72,7 @@ export default function ProjectColumn({
   // Handle column deletion
   const handleDeleteColumn = async () => {
     if (!githubService) return;
-    
+
     if (window.confirm(`Are you sure you want to delete the column "${column.name}"?`)) {
       try {
         setIsLoading(true);
@@ -85,7 +90,7 @@ export default function ProjectColumn({
   // Handle card creation
   const handleAddCard = async () => {
     if (!githubService || !newCardNote.trim()) return;
-    
+
     try {
       setIsLoading(true);
       await githubService.createCard(column.id, { note: newCardNote });
@@ -103,7 +108,7 @@ export default function ProjectColumn({
   // Handle card deletion
   const handleDeleteCard = async (cardId: number) => {
     if (!githubService) return;
-    
+
     if (window.confirm("Are you sure you want to delete this card?")) {
       try {
         setIsLoading(true);
@@ -177,33 +182,69 @@ export default function ProjectColumn({
           </div>
         )}
       </div>
-      
+
       <div className="p-2 max-h-[calc(100vh-200px)] overflow-y-auto">
         {cards.length > 0 ? (
           <div className="space-y-2">
-            {cards.map((card) => (
-              <div key={card.id} className="bg-white dark:bg-gray-900 rounded-md shadow-sm p-3">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                    {card.note}
+            {cards.map((card, index) => (
+              isDraggable ? (
+                <Draggable key={card.id} draggableId={`card-${card.id}`} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className={`bg-white dark:bg-gray-900 rounded-md shadow-sm p-3 ${
+                        snapshot.isDragging ? "opacity-70 shadow-lg" : ""
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                          {card.note}
+                        </div>
+                        <button
+                          onClick={() => handleDeleteCard(card.id)}
+                          className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 ml-2"
+                          title="Delete card"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                      {card.creator && (
+                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                          <img src={card.creator.avatar_url} alt={card.creator.login} className="w-4 h-4 rounded-full mr-1" />
+                          <span>{card.creator.login}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Draggable>
+              ) : (
+                <div key={card.id} className="bg-white dark:bg-gray-900 rounded-md shadow-sm p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                      {card.note}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteCard(card.id)}
+                      className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 ml-2"
+                      title="Delete card"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteCard(card.id)}
-                    className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 ml-2"
-                    title="Delete card"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+                  {card.creator && (
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <img src={card.creator.avatar_url} alt={card.creator.login} className="w-4 h-4 rounded-full mr-1" />
+                      <span>{card.creator.login}</span>
+                    </div>
+                  )}
                 </div>
-                {card.creator && (
-                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                    <img src={card.creator.avatar_url} alt={card.creator.login} className="w-4 h-4 rounded-full mr-1" />
-                    <span>{card.creator.login}</span>
-                  </div>
-                )}
-              </div>
+              )
             ))}
           </div>
         ) : (
@@ -211,7 +252,7 @@ export default function ProjectColumn({
             No cards in this column
           </div>
         )}
-        
+
         {showAddCard ? (
           <div className="mt-2 bg-white dark:bg-gray-900 rounded-md shadow-sm p-3">
             <textarea
@@ -242,17 +283,37 @@ export default function ProjectColumn({
             </div>
           </div>
         ) : (
-          <button
-            onClick={() => setShowAddCard(true)}
-            className="w-full mt-2 flex items-center justify-center py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            Add card
-          </button>
+          <div className="flex space-x-2 mt-2">
+            <button
+              onClick={() => setShowAddCard(true)}
+              className="flex-1 flex items-center justify-center py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Add note
+            </button>
+            <button
+              onClick={() => setShowLinkItemModal(true)}
+              className="flex-1 flex items-center justify-center py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+              </svg>
+              Link item
+            </button>
+          </div>
         )}
       </div>
+
+      {showLinkItemModal && (
+        <LinkItemModal
+          isOpen={showLinkItemModal}
+          onClose={() => setShowLinkItemModal(false)}
+          columnId={column.id}
+          onItemLinked={onAddCard}
+        />
+      )}
     </div>
   );
 }

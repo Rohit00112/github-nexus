@@ -5,14 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useGitHub } from "../../context/GitHubContext";
 import MainLayout from "../../components/layout/MainLayout";
-import ProjectColumn from "../../components/projects/ProjectColumn";
-import CreateColumnModal from "../../components/projects/CreateColumnModal";
+import ProjectBoard from "../../components/projects/ProjectBoard";
 
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = parseInt(params.id as string, 10);
-  
+
   const { githubService } = useGitHub();
   const [project, setProject] = useState<any | null>(null);
   const [columns, setColumns] = useState<any[]>([]);
@@ -20,6 +19,7 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateColumnModal, setShowCreateColumnModal] = useState(false);
+  const [isDraggingEnabled, setIsDraggingEnabled] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [projectName, setProjectName] = useState("");
@@ -29,29 +29,29 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     async function fetchProjectDetails() {
       if (!githubService) return;
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // Fetch project details
         const projectData = await githubService.getProject(projectId);
         setProject(projectData);
         setProjectName(projectData.name);
         setProjectDescription(projectData.body || "");
-        
+
         // Fetch project columns
         const columnsData = await githubService.getProjectColumns(projectId);
         setColumns(columnsData);
-        
+
         // Fetch cards for each column
         const cardsData: Record<number, any[]> = {};
-        
+
         for (const column of columnsData) {
           const columnCards = await githubService.getColumnCards(column.id);
           cardsData[column.id] = columnCards;
         }
-        
+
         setCards(cardsData);
       } catch (err) {
         console.error("Error fetching project details:", err);
@@ -60,7 +60,7 @@ export default function ProjectDetailPage() {
         setIsLoading(false);
       }
     }
-    
+
     fetchProjectDetails();
   }, [githubService, projectId]);
 
@@ -77,10 +77,10 @@ export default function ProjectDetailPage() {
   // Handle project update
   const handleUpdateProject = async (field: "name" | "body") => {
     if (!githubService || !project) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       if (field === "name" && projectName.trim()) {
         await githubService.updateProject(projectId, { name: projectName });
         setProject({ ...project, name: projectName });
@@ -101,7 +101,7 @@ export default function ProjectDetailPage() {
   // Handle project deletion
   const handleDeleteProject = async () => {
     if (!githubService || !project) return;
-    
+
     if (window.confirm(`Are you sure you want to delete the project "${project.name}"?`)) {
       try {
         setIsLoading(true);
@@ -124,7 +124,7 @@ export default function ProjectDetailPage() {
   // Handle column deletion
   const handleDeleteColumn = async (columnId: number) => {
     setColumns(columns.filter(column => column.id !== columnId));
-    
+
     const newCards = { ...cards };
     delete newCards[columnId];
     setCards(newCards);
@@ -132,7 +132,7 @@ export default function ProjectDetailPage() {
 
   // Handle column update
   const handleUpdateColumn = async (columnId: number, name: string) => {
-    setColumns(columns.map(column => 
+    setColumns(columns.map(column =>
       column.id === columnId ? { ...column, name } : column
     ));
   };
@@ -140,7 +140,7 @@ export default function ProjectDetailPage() {
   // Handle card creation
   const handleAddCard = async (columnId: number) => {
     if (!githubService) return;
-    
+
     try {
       // Refresh cards for the column
       const columnCards = await githubService.getColumnCards(columnId);
@@ -154,27 +154,27 @@ export default function ProjectDetailPage() {
   const handleDeleteCard = async (cardId: number) => {
     // Update cards state by removing the deleted card
     const newCards = { ...cards };
-    
+
     for (const columnId in newCards) {
       newCards[columnId] = newCards[columnId].filter(card => card.id !== cardId);
     }
-    
+
     setCards(newCards);
   };
 
   // Handle card movement
   const handleMoveCard = async (cardId: number, columnId: number, position: string) => {
     if (!githubService) return;
-    
+
     try {
       // Refresh cards for all columns after movement
       const updatedCards: Record<number, any[]> = {};
-      
+
       for (const column of columns) {
         const columnCards = await githubService.getColumnCards(column.id);
         updatedCards[column.id] = columnCards;
       }
-      
+
       setCards(updatedCards);
     } catch (error) {
       console.error("Error refreshing cards after movement:", error);
@@ -238,7 +238,7 @@ export default function ProjectDetailPage() {
             <span>/</span>
             <span className="text-gray-900 dark:text-gray-200">{project.name}</span>
           </div>
-          
+
           <div className="flex justify-between items-start">
             <div className="flex-1">
               {isEditingName ? (
@@ -284,7 +284,7 @@ export default function ProjectDetailPage() {
                   </button>
                 </h1>
               )}
-              
+
               <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   project.state === "open"
@@ -299,7 +299,7 @@ export default function ProjectDetailPage() {
                 <span>Updated: {formatDate(project.updated_at)}</span>
               </div>
             </div>
-            
+
             <div className="flex space-x-2">
               <a
                 href={project.html_url}
@@ -324,7 +324,7 @@ export default function ProjectDetailPage() {
               </button>
             </div>
           </div>
-          
+
           <div className="mt-4">
             {isEditingDescription ? (
               <div>
@@ -377,64 +377,36 @@ export default function ProjectDetailPage() {
             )}
           </div>
         </div>
-        
+
         <div className="mt-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Project Columns</h2>
-            <button
-              onClick={() => setShowCreateColumnModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-md transition-colors flex items-center text-sm"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              Add Column
-            </button>
-          </div>
-          
-          {columns.length > 0 ? (
-            <div className="flex space-x-4 overflow-x-auto pb-4">
-              {columns.map(column => (
-                <ProjectColumn
-                  key={column.id}
-                  column={column}
-                  cards={cards[column.id] || []}
-                  onDeleteColumn={handleDeleteColumn}
-                  onUpdateColumn={handleUpdateColumn}
-                  onAddCard={handleAddCard}
-                  onDeleteCard={handleDeleteCard}
-                  onMoveCard={handleMoveCard}
+            <h2 className="text-xl font-semibold">Project Board</h2>
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="drag-toggle"
+                  checked={isDraggingEnabled}
+                  onChange={(e) => setIsDraggingEnabled(e.target.checked)}
+                  className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-              ))}
+                <label htmlFor="drag-toggle" className="text-sm text-gray-700 dark:text-gray-300">
+                  Enable drag and drop
+                </label>
+              </div>
             </div>
-          ) : (
-            <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg text-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-              </svg>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No columns yet</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                Add columns to organize your project tasks and issues.
-              </p>
-              <button
-                onClick={() => setShowCreateColumnModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-              >
-                Add your first column
-              </button>
-            </div>
-          )}
+          </div>
+
+          <ProjectBoard
+            projectId={projectId}
+            initialColumns={columns}
+            initialCards={cards}
+            onColumnCreated={handleColumnCreated}
+            onColumnDeleted={handleDeleteColumn}
+            onColumnUpdated={handleUpdateColumn}
+          />
         </div>
       </div>
-
-      {showCreateColumnModal && (
-        <CreateColumnModal
-          isOpen={showCreateColumnModal}
-          onClose={() => setShowCreateColumnModal(false)}
-          projectId={projectId}
-          onColumnCreated={handleColumnCreated}
-        />
-      )}
     </MainLayout>
   );
 }
