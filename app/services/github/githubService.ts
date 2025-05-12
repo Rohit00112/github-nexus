@@ -1044,4 +1044,29 @@ export class GitHubService {
 
     return allProjects;
   }
+
+  /**
+   * Search for issues in a repository
+   * @param query The search query
+   * @param owner The repository owner
+   * @param repo The repository name
+   * @param page The page number
+   * @param perPage The number of results per page
+   */
+  async searchIssues(query: string, owner: string, repo: string, page = 1, perPage = 10) {
+    const { data } = await this.octokit.rest.issues.listForRepo({
+      owner,
+      repo,
+      per_page: perPage,
+      page,
+      state: "all",
+    });
+
+    // Filter issues based on the query
+    const lowerQuery = query.toLowerCase();
+    return data.filter(issue =>
+      issue.title.toLowerCase().includes(lowerQuery) ||
+      (issue.body && issue.body.toLowerCase().includes(lowerQuery))
+    );
+  }
 }
