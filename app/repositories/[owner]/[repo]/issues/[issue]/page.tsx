@@ -7,9 +7,11 @@ import Image from "next/image";
 import MainLayout from "../../../../../components/layout/MainLayout";
 import { useAuth } from "../../../../../hooks/useAuth";
 import { useGitHub } from "../../../../../context/GitHubContext";
+import { useAutomation } from "../../../../../context/AutomationContext";
 import { GitHubIssue, GitHubComment } from "../../../../../types/github";
 import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
 import ReactMarkdown from 'react-markdown';
+import RuleExecutor from "../../../../../components/automation/RuleExecutor";
 
 interface IssueDetailPageProps {
   params: {
@@ -24,34 +26,35 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
   const ownerName = Array.isArray(params.owner) ? params.owner[0] : params.owner;
   const repoName = Array.isArray(params.repo) ? params.repo[0] : params.repo;
   const issueNumber = Array.isArray(params.issue) ? params.issue[0] : params.issue;
-  
+
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
-  
+  const { rules, isLoading: automationLoading } = useAutomation();
+
   const [issue, setIssue] = useState<GitHubIssue | null>(null);
   const [comments, setComments] = useState<GitHubComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/auth/signin");
     }
   }, [authLoading, isAuthenticated, router]);
-  
+
   useEffect(() => {
     async function fetchIssueAndComments() {
       if (githubService && !githubLoading) {
         try {
           setIsLoading(true);
           setError(null);
-          
+
           const issueData = await githubService.getIssue(ownerName, repoName, parseInt(issueNumber));
           setIssue(issueData);
-          
+
           const commentsData = await githubService.getIssueComments(ownerName, repoName, parseInt(issueNumber));
           setComments(commentsData);
         } catch (err) {
@@ -62,10 +65,10 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
         }
       }
     }
-    
+
     fetchIssueAndComments();
   }, [githubService, githubLoading, ownerName, repoName, issueNumber]);
-  
+
   // Format date to a more readable format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -77,22 +80,22 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       minute: '2-digit',
     });
   };
-  
+
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newComment.trim()) return;
-    
+
     try {
       setIsSubmitting(true);
-      
+
       const comment = await githubService?.createIssueComment(
         ownerName,
         repoName,
         parseInt(issueNumber),
         newComment
       );
-      
+
       if (comment) {
         setComments([...comments, comment]);
         setNewComment("");
@@ -104,20 +107,20 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       setIsSubmitting(false);
     }
   };
-  
+
   const handleCloseIssue = async () => {
     if (!issue) return;
-    
+
     try {
       setIsSubmitting(true);
-      
+
       const updatedIssue = await githubService?.updateIssue(
         ownerName,
         repoName,
         parseInt(issueNumber),
         { state: "closed" }
       );
-      
+
       if (updatedIssue) {
         setIssue(updatedIssue);
       }
@@ -128,20 +131,20 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       setIsSubmitting(false);
     }
   };
-  
+
   const handleReopenIssue = async () => {
     if (!issue) return;
-    
+
     try {
       setIsSubmitting(true);
-      
+
       const updatedIssue = await githubService?.updateIssue(
         ownerName,
         repoName,
         parseInt(issueNumber),
         { state: "open" }
       );
-      
+
       if (updatedIssue) {
         setIssue(updatedIssue);
       }
@@ -152,8 +155,8 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       setIsSubmitting(false);
     }
   };
-  
-  if (authLoading || githubLoading || isLoading) {
+
+  if (authLoading || githubLoading || automationLoading || isLoading) {
     return (
       <MainLayout>
         <div className="flex justify-center items-center h-96">
@@ -162,7 +165,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       </MainLayout>
     );
   }
-  
+
   if (error) {
     return (
       <MainLayout>
@@ -172,7 +175,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       </MainLayout>
     );
   }
-  
+
   if (!issue) {
     return (
       <MainLayout>
@@ -181,7 +184,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             The issue you're looking for doesn't exist or you don't have permission to view it.
           </p>
-          <Link 
+          <Link
             href="/issues"
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
           >
@@ -191,12 +194,12 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       </MainLayout>
     );
   }
-  
+
   return (
     <MainLayout>
       <div className="py-6">
         <div className="mb-6">
-          <Link 
+          <Link
             href={`/repositories/${ownerName}/${repoName}`}
             className="text-blue-600 hover:underline flex items-center"
           >
@@ -206,7 +209,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
             Back to {ownerName}/{repoName}
           </Link>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
@@ -214,14 +217,14 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
                 {issue.title} <span className="text-gray-500">#{issue.number}</span>
               </h1>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                issue.state === 'open' 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                issue.state === 'open'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                   : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
               }`}>
                 {issue.state}
               </span>
             </div>
-            
+
             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-4">
               <div className="flex items-center mr-4">
                 <div className="h-6 w-6 rounded-full overflow-hidden mr-2">
@@ -237,21 +240,21 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
               </div>
               <span>opened this issue on {formatDate(issue.created_at)}</span>
             </div>
-            
+
             <div className="prose dark:prose-invert max-w-none">
               <ReactMarkdown>{issue.body || 'No description provided.'}</ReactMarkdown>
             </div>
-            
+
             {issue.labels.length > 0 && (
               <div className="mt-4">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Labels:</div>
                 <div className="flex flex-wrap gap-2">
                   {issue.labels.map(label => (
-                    <span 
-                      key={label.id} 
+                    <span
+                      key={label.id}
                       className="text-xs px-2 py-1 rounded-full"
-                      style={{ 
-                        backgroundColor: `#${label.color}20`, 
+                      style={{
+                        backgroundColor: `#${label.color}20`,
                         color: `#${label.color}`,
                         border: `1px solid #${label.color}40`
                       }}
@@ -262,7 +265,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
                 </div>
               </div>
             )}
-            
+
             {issue.assignees.length > 0 && (
               <div className="mt-4">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assignees:</div>
@@ -285,7 +288,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
               </div>
             )}
           </div>
-          
+
           {comments.length > 0 && (
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {comments.map(comment => (
@@ -305,7 +308,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
                     </div>
                     <span>commented on {formatDate(comment.created_at)}</span>
                   </div>
-                  
+
                   <div className="prose dark:prose-invert max-w-none">
                     <ReactMarkdown>{comment.body}</ReactMarkdown>
                   </div>
@@ -313,7 +316,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
               ))}
             </div>
           )}
-          
+
           <div className="p-6 bg-gray-50 dark:bg-gray-900">
             <form onSubmit={handleSubmitComment}>
               <div className="mb-4">
@@ -330,7 +333,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
                   required
                 />
               </div>
-              
+
               <div className="flex justify-between">
                 <div>
                   {issue.state === 'open' ? (
@@ -353,7 +356,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
                     </button>
                   )}
                 </div>
-                
+
                 <button
                   type="submit"
                   className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors disabled:opacity-50"
@@ -363,6 +366,17 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+
+        {/* Automation Rules Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
+          <div className="p-6">
+            <RuleExecutor
+              owner={ownerName}
+              repo={repoName}
+              issueNumber={parseInt(issueNumber)}
+            />
           </div>
         </div>
       </div>

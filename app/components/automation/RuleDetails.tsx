@@ -1,52 +1,239 @@
 "use client";
 
-import { AutomationRule, ConditionGroup, Condition, ConditionType, ConditionOperator, Action, ActionType } from "@/app/types/automation";
-import { Card, CardBody, Divider, Chip } from "@nextui-org/react";
+import { useState } from "react";
+import { useGitHub } from "../../context/GitHubContext";
+import { useAutomation } from "../../context/AutomationContext";
+import {
+  AutomationRule,
+  ConditionGroup,
+  Condition,
+  ConditionType,
+  ConditionOperator,
+  Action,
+  ActionType,
+  RuleExecutionResult
+} from "@/app/types/automation";
+import {
+  Card,
+  CardBody,
+  Divider,
+  Chip,
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+  Input,
+  Spinner
+} from "@nextui-org/react";
+import { PlayIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 interface RuleDetailsProps {
   rule: AutomationRule;
 }
 
 export default function RuleDetails({ rule }: RuleDetailsProps) {
+  const { automationService } = useAutomation();
+  const { githubService } = useGitHub();
+  const testModal = useDisclosure();
+
+  const [repoOwner, setRepoOwner] = useState("");
+  const [repoName, setRepoName] = useState("");
+  const [issueNumber, setIssueNumber] = useState("");
+  const [isTestingRule, setIsTestingRule] = useState(false);
+  const [testResult, setTestResult] = useState<RuleExecutionResult | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  const handleTestRule = async () => {
+    if (!repoOwner || !repoName || !issueNumber || !automationService) {
+      setTestError("Please fill in all fields");
+      return;
+    }
+
+    try {
+      setIsTestingRule(true);
+      setTestError(null);
+
+      const issueNum = parseInt(issueNumber, 10);
+      if (isNaN(issueNum)) {
+        throw new Error("Issue number must be a valid number");
+      }
+
+      let result: RuleExecutionResult;
+      if (rule.resourceType === "pull_request") {
+        result = await automationService.testRuleAgainstPullRequest(rule, repoOwner, repoName, issueNum);
+      } else {
+        result = await automationService.testRuleAgainstIssue(rule, repoOwner, repoName, issueNum);
+      }
+
+      setTestResult(result);
+    } catch (error) {
+      console.error("Error testing rule:", error);
+      setTestError(error instanceof Error ? error.message : "An unknown error occurred");
+    } finally {
+      setIsTestingRule(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div>
+      <div className="flex justify-between items-start">
         <h3 className="text-lg font-medium">Rule Information</h3>
-        <div className="grid grid-cols-2 gap-4 mt-2">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Name</p>
-            <p>{rule.name}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Created By</p>
-            <p>{rule.createdBy}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Created At</p>
-            <p>{new Date(rule.createdAt).toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Last Updated</p>
-            <p>{new Date(rule.updatedAt).toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-            <Chip color={rule.enabled ? "success" : "danger"} size="sm">
-              {rule.enabled ? "Enabled" : "Disabled"}
-            </Chip>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Applies To</p>
-            <p>{rule.resourceType}</p>
-          </div>
-        </div>
-        {rule.description && (
-          <div className="mt-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Description</p>
-            <p>{rule.description}</p>
-          </div>
-        )}
+        <Button
+          color="primary"
+          variant="flat"
+          size="sm"
+          startContent={<PlayIcon className="h-4 w-4" />}
+          onPress={testModal.onOpen}
+        >
+          Test Rule
+        </Button>
       </div>
+
+      <div className="grid grid-cols-2 gap-4 mt-2">
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Name</p>
+          <p>{rule.name}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Created By</p>
+          <p>{rule.createdBy}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Created At</p>
+          <p>{new Date(rule.createdAt).toLocaleString()}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Last Updated</p>
+          <p>{new Date(rule.updatedAt).toLocaleString()}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
+          <Chip color={rule.enabled ? "success" : "danger"} size="sm">
+            {rule.enabled ? "Enabled" : "Disabled"}
+          </Chip>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Applies To</p>
+          <Chip color={
+            rule.resourceType === "issue" ? "success" :
+            rule.resourceType === "pull_request" ? "primary" : "secondary"
+          } size="sm">
+            {rule.resourceType === "issue" ? "Issues" :
+             rule.resourceType === "pull_request" ? "Pull Requests" :
+             "Issues & Pull Requests"}
+          </Chip>
+        </div>
+      </div>
+      {rule.description && (
+        <div className="mt-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Description</p>
+          <p>{rule.description}</p>
+        </div>
+      )}
+
+      {/* Test Rule Modal */}
+      <Modal isOpen={testModal.isOpen} onClose={testModal.onClose}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Test Rule: {rule.name}</ModalHeader>
+              <ModalBody>
+                <div className="space-y-4">
+                  <p className="text-sm">
+                    Test this rule against an existing issue or pull request to see if it matches and what actions would be taken.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="Repository Owner"
+                      placeholder="e.g., octocat"
+                      value={repoOwner}
+                      onChange={(e) => setRepoOwner(e.target.value)}
+                      isRequired
+                    />
+                    <Input
+                      label="Repository Name"
+                      placeholder="e.g., hello-world"
+                      value={repoName}
+                      onChange={(e) => setRepoName(e.target.value)}
+                      isRequired
+                    />
+                  </div>
+
+                  <Input
+                    label={rule.resourceType === "pull_request" ? "Pull Request Number" :
+                           rule.resourceType === "issue" ? "Issue Number" :
+                           "Issue/PR Number"}
+                    placeholder="e.g., 42"
+                    value={issueNumber}
+                    onChange={(e) => setIssueNumber(e.target.value)}
+                    isRequired
+                    type="number"
+                  />
+
+                  {testError && (
+                    <div className="text-danger text-sm">{testError}</div>
+                  )}
+
+                  {testResult && (
+                    <Card>
+                      <CardBody>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Match Result:</span>
+                            {testResult.matched ? (
+                              <div className="flex items-center text-success">
+                                <CheckCircleIcon className="h-5 w-5 mr-1" />
+                                <span>Conditions matched</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center text-danger">
+                                <XCircleIcon className="h-5 w-5 mr-1" />
+                                <span>Conditions did not match</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {testResult.matched && (
+                            <>
+                              <Divider />
+                              <div>
+                                <span className="font-medium">Actions that would be executed:</span>
+                                <ul className="list-disc pl-5 mt-1">
+                                  {testResult.actionsExecuted.map((action, index) => (
+                                    <li key={index} className="text-sm">
+                                      {action.type.replace(/_/g, ' ')}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </CardBody>
+                    </Card>
+                  )}
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Close
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={handleTestRule}
+                  isLoading={isTestingRule}
+                >
+                  Test Rule
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
 
       <Divider />
 
@@ -98,7 +285,7 @@ interface ConditionGroupRendererProps {
 
 function ConditionGroupRenderer({ group, level = 0 }: ConditionGroupRendererProps) {
   const operator = group.operator === ConditionOperator.AND ? "AND" : "OR";
-  
+
   return (
     <div className={`pl-${level * 4}`}>
       <div className="font-medium text-sm text-gray-500 dark:text-gray-400">
@@ -125,7 +312,7 @@ interface ConditionRendererProps {
 
 function ConditionRenderer({ condition }: ConditionRendererProps) {
   let description = '';
-  
+
   switch (condition.type) {
     case ConditionType.TITLE_CONTAINS:
       description = `Title ${condition.negate ? 'does not contain' : 'contains'} "${condition.value}"`;
@@ -169,7 +356,7 @@ function ConditionRenderer({ condition }: ConditionRendererProps) {
     default:
       description = `Condition: ${condition.type}`;
   }
-  
+
   return (
     <Card className="border-l-4 border-green-500">
       <CardBody className="py-2 px-4">
@@ -185,7 +372,7 @@ interface ActionRendererProps {
 
 function ActionRenderer({ action }: ActionRendererProps) {
   let description = '';
-  
+
   switch (action.type) {
     case ActionType.ADD_LABEL:
       description = `Add label "${action.label}"`;
@@ -238,6 +425,6 @@ function ActionRenderer({ action }: ActionRendererProps) {
     default:
       description = `Action: ${action.type}`;
   }
-  
+
   return <p>{description}</p>;
 }

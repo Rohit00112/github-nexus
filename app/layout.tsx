@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthContext from "./context/AuthContext";
-import { GitHubProvider } from "./context/GitHubContext";
-import { NotificationsProvider } from "./context/NotificationsContext";
-import { NextUIProvider } from "@nextui-org/react";
-import { ThemeProvider } from "./context/ThemeContext";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,15 +33,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthContext>
-          <GitHubProvider>
-            <NotificationsProvider>
-              <ThemeProvider>
-                <NextUIProvider>
-                  {children}
-                </NextUIProvider>
-              </ThemeProvider>
-            </NotificationsProvider>
-          </GitHubProvider>
+          <Providers>
+            {children}
+          </Providers>
         </AuthContext>
       </body>
     </html>
