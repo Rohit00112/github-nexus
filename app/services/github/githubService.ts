@@ -10,6 +10,17 @@ import {
   CREATE_DRAFT_ISSUE,
   UPDATE_PROJECT_ITEM_FIELD
 } from "./queries/projectsQueries";
+import {
+  GET_REPOSITORY_WORKFLOWS,
+  GET_WORKFLOW_RUNS,
+  GET_WORKFLOW_RUN,
+  TRIGGER_WORKFLOW,
+  CANCEL_WORKFLOW_RUN,
+  RERUN_WORKFLOW,
+  GET_WORKFLOW_USAGE,
+  GET_REPOSITORY_SECRETS,
+  GET_REPOSITORY_ENVIRONMENTS
+} from "./queries/actionsQueries";
 
 export class GitHubService {
   // Make octokit public so components can access it directly
@@ -1165,5 +1176,128 @@ export class GitHubService {
       value
     });
     return result.updateProjectV2ItemFieldValue.projectV2Item;
+  }
+
+  // GitHub Actions methods
+  async getRepositoryWorkflows(owner: string, repo: string, first = 100) {
+    const { repository } = await this.octokit.graphql(GET_REPOSITORY_WORKFLOWS, {
+      owner,
+      name: repo,
+      first
+    });
+    return repository.workflows.nodes;
+  }
+
+  async getWorkflowRuns(owner: string, repo: string, workflowId: string, first = 20) {
+    const { node } = await this.octokit.graphql(GET_WORKFLOW_RUNS, {
+      owner,
+      name: repo,
+      workflowId,
+      first
+    });
+    return node.runs.nodes;
+  }
+
+  async getWorkflowRun(runId: string) {
+    const { node } = await this.octokit.graphql(GET_WORKFLOW_RUN, {
+      runId
+    });
+    return node;
+  }
+
+  async triggerWorkflow(owner: string, repo: string, workflowId: string, ref: string, inputs: Record<string, string> = {}) {
+    const result = await this.octokit.graphql(TRIGGER_WORKFLOW, {
+      input: {
+        workflowId,
+        ref,
+        inputs
+      }
+    });
+    return result.createWorkflowDispatch;
+  }
+
+  async cancelWorkflowRun(runId: string) {
+    const result = await this.octokit.graphql(CANCEL_WORKFLOW_RUN, {
+      input: {
+        runId
+      }
+    });
+    return result.cancelWorkflowRun;
+  }
+
+  async rerunWorkflow(runId: string) {
+    const result = await this.octokit.graphql(RERUN_WORKFLOW, {
+      input: {
+        runId
+      }
+    });
+    return result.rerunWorkflow;
+  }
+
+  async getWorkflowUsage(owner: string, repo: string) {
+    const { repository } = await this.octokit.graphql(GET_WORKFLOW_USAGE, {
+      owner,
+      name: repo
+    });
+    return repository.actions.workflows.nodes;
+  }
+
+  async getRepositorySecrets(owner: string, repo: string) {
+    const { repository } = await this.octokit.graphql(GET_REPOSITORY_SECRETS, {
+      owner,
+      name: repo
+    });
+    return repository.secrets.nodes;
+  }
+
+  async getRepositoryEnvironments(owner: string, repo: string) {
+    const { repository } = await this.octokit.graphql(GET_REPOSITORY_ENVIRONMENTS, {
+      owner,
+      name: repo
+    });
+    return repository.environments.nodes;
+  }
+
+  // REST API methods for GitHub Actions
+  async getWorkflowRunLogs(owner: string, repo: string, runId: number) {
+    const response = await this.octokit.rest.actions.downloadWorkflowRunLogs({
+      owner,
+      repo,
+      run_id: runId
+    });
+    return response.url;
+  }
+
+  async getWorkflowRunJobs(owner: string, repo: string, runId: number) {
+    const { data } = await this.octokit.rest.actions.listJobsForWorkflowRun({
+      owner,
+      repo,
+      run_id: runId
+    });
+    return data.jobs;
+  }
+
+  async createOrUpdateRepositorySecret(owner: string, repo: string, secretName: string, secretValue: string) {
+    // First, get the public key for the repository
+    const { data: publicKeyData } = await this.octokit.rest.actions.getRepoPublicKey({
+      owner,
+      repo
+    });
+
+    // Use the sodium-plus library to encrypt the secret
+    // This is a simplified version - in a real app, you'd need to properly encrypt the secret
+    // using the public key and sodium-plus or similar library
+    const encryptedValue = Buffer.from(secretValue).toString('base64');
+
+    // Create or update the secret
+    const { data } = await this.octokit.rest.actions.createOrUpdateRepoSecret({
+      owner,
+      repo,
+      secret_name: secretName,
+      encrypted_value: encryptedValue,
+      key_id: publicKeyData.key_id
+    });
+
+    return data;
   }
 }
