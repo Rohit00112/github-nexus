@@ -11,8 +11,9 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"user" | "repository" | "organization">("user");
+  const [activeTab, setActiveTab] = useState<"user" | "repository" | "organization" | "beta">("user");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [projectsBeta, setProjectsBeta] = useState<any[]>([]);
 
   // Fetch projects based on active tab
   useEffect(() => {
@@ -21,9 +22,9 @@ export default function ProjectsPage() {
         try {
           setIsLoading(true);
           setError(null);
-          
+
           let projectsData: any[] = [];
-          
+
           switch (activeTab) {
             case "user":
               const user = await githubService.getCurrentUser();
@@ -35,9 +36,23 @@ export default function ProjectsPage() {
             case "organization":
               projectsData = await githubService.getAllOrganizationProjects();
               break;
+            case "beta":
+              // Fetch GitHub Projects (beta)
+              try {
+                const user = await githubService.getCurrentUser();
+                const userProjectsBeta = await githubService.getUserProjectsBeta(user.login);
+                const orgProjectsBeta = await githubService.getAllOrgProjectsBeta();
+                setProjectsBeta([...userProjectsBeta, ...orgProjectsBeta]);
+              } catch (betaError) {
+                console.error("Error fetching beta projects:", betaError);
+                setError("Failed to fetch GitHub Projects (beta). Please try again later.");
+              }
+              break;
           }
-          
-          setProjects(projectsData);
+
+          if (activeTab !== "beta") {
+            setProjects(projectsData);
+          }
         } catch (err) {
           console.error("Error fetching projects:", err);
           setError("Failed to fetch projects. Please try again later.");
@@ -46,7 +61,7 @@ export default function ProjectsPage() {
         }
       }
     }
-    
+
     fetchProjects();
   }, [githubService, activeTab]);
 
@@ -115,6 +130,16 @@ export default function ProjectsPage() {
               >
                 Organization Projects
               </button>
+              <button
+                onClick={() => setActiveTab("beta")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === "beta"
+                    ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                }`}
+              >
+                Projects (Beta)
+              </button>
             </nav>
           </div>
         </div>
@@ -129,6 +154,79 @@ export default function ProjectsPage() {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
+        ) : activeTab === "beta" ? (
+          // Display GitHub Projects (beta)
+          projectsBeta.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projectsBeta.map(project => (
+                <div key={project.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                  <div className="p-4">
+                    <h3 className="text-lg font-medium mb-2">
+                      <a
+                        href={`/projects/beta/${project.creator.login}/${project.number}`}
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {project.title}
+                      </a>
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                      {project.shortDescription || "No description provided."}
+                    </p>
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        project.closed
+                          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      }`}>
+                        {project.closed ? "Closed" : "Open"}
+                      </span>
+                      <span className="mx-2">•</span>
+                      <span>Created: {new Date(project.createdAt).toLocaleDateString()}</span>
+                      <span className="mx-2">•</span>
+                      <div className="flex items-center">
+                        <img src={project.creator.avatarUrl} alt={project.creator.login} className="w-4 h-4 rounded-full mr-1" />
+                        <span>{project.creator.login}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 flex justify-between">
+                    <a
+                      href={`/projects/beta/${project.creator.login}/${project.number}`}
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      View Details
+                    </a>
+                    <a
+                      href={project.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                    >
+                      View on GitHub
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No GitHub Projects (beta) found</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
+                You haven't created any GitHub Projects (beta) yet.
+              </p>
+              <a
+                href="https://github.com/features/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Learn about GitHub Projects (beta)
+              </a>
+            </div>
+          )
         ) : projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map(project => (
