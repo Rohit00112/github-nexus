@@ -1,6 +1,16 @@
 import { Octokit } from "octokit";
 import { AuthCredentials, AuthMethod, AuthService } from "../auth/authService";
 import {
+  GET_USER_PROJECTS_BETA,
+  GET_ORG_PROJECTS_BETA,
+  GET_PROJECT_BETA,
+  GET_ORG_PROJECT_BETA,
+  GET_PROJECT_ITEMS,
+  ADD_ITEM_TO_PROJECT,
+  CREATE_DRAFT_ISSUE,
+  UPDATE_PROJECT_ITEM_FIELD
+} from "./queries/projectsQueries";
+import {
   GET_REPOSITORY_WORKFLOWS,
   GET_WORKFLOW_RUNS,
   GET_WORKFLOW_RUN,
@@ -1079,6 +1089,93 @@ export class GitHubService {
       issue.title.toLowerCase().includes(lowerQuery) ||
       (issue.body && issue.body.toLowerCase().includes(lowerQuery))
     );
+  }
+
+  // GitHub Projects (beta) methods
+  async getUserProjectsBeta(username: string, first = 20) {
+    const { user } = await this.octokit.graphql(GET_USER_PROJECTS_BETA, {
+      login: username,
+      first
+    });
+    return user.projectsV2.nodes;
+  }
+
+  async getOrgProjectsBeta(org: string, first = 20) {
+    const { organization } = await this.octokit.graphql(GET_ORG_PROJECTS_BETA, {
+      org,
+      first
+    });
+    return organization.projectsV2.nodes;
+  }
+
+  async getAllUserProjectsBeta() {
+    const user = await this.getCurrentUser();
+    return this.getUserProjectsBeta(user.login);
+  }
+
+  async getAllOrgProjectsBeta() {
+    const orgs = await this.getUserOrganizations();
+    let allProjects: any[] = [];
+
+    for (const org of orgs) {
+      const projects = await this.getOrgProjectsBeta(org.login);
+      allProjects = [...allProjects, ...projects];
+    }
+
+    return allProjects;
+  }
+
+  async getProjectBeta(owner: string, number: number) {
+    try {
+      // Try to get as user project first
+      const { user } = await this.octokit.graphql(GET_PROJECT_BETA, {
+        owner,
+        number
+      });
+      return user.projectV2;
+    } catch (error) {
+      // If not found, try as org project
+      const { organization } = await this.octokit.graphql(GET_ORG_PROJECT_BETA, {
+        org: owner,
+        number
+      });
+      return organization.projectV2;
+    }
+  }
+
+  async getProjectItems(projectId: string, first = 100) {
+    const { node } = await this.octokit.graphql(GET_PROJECT_ITEMS, {
+      projectId,
+      first
+    });
+    return node.items.nodes;
+  }
+
+  async addItemToProject(projectId: string, contentId: string) {
+    const result = await this.octokit.graphql(ADD_ITEM_TO_PROJECT, {
+      projectId,
+      contentId
+    });
+    return result.addProjectV2ItemById.item;
+  }
+
+  async createDraftIssue(projectId: string, title: string, body?: string) {
+    const result = await this.octokit.graphql(CREATE_DRAFT_ISSUE, {
+      projectId,
+      title,
+      body
+    });
+    return result.addProjectV2DraftIssue.projectItem;
+  }
+
+  async updateProjectItemField(projectId: string, itemId: string, fieldId: string, value: string) {
+    const result = await this.octokit.graphql(UPDATE_PROJECT_ITEM_FIELD, {
+      projectId,
+      itemId,
+      fieldId,
+      value
+    });
+    return result.updateProjectV2ItemFieldValue.projectV2Item;
   }
 
   // GitHub Actions methods
