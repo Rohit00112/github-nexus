@@ -21,6 +21,20 @@ import {
   GET_REPOSITORY_SECRETS,
   GET_REPOSITORY_ENVIRONMENTS
 } from "./queries/actionsQueries";
+import {
+  GET_REPOSITORY_DISCUSSIONS,
+  GET_DISCUSSION,
+  GET_DISCUSSION_COMMENTS,
+  GET_DISCUSSION_CATEGORIES,
+  CREATE_DISCUSSION,
+  ADD_DISCUSSION_COMMENT,
+  ADD_DISCUSSION_REPLY,
+  MARK_DISCUSSION_COMMENT_AS_ANSWER,
+  UNMARK_DISCUSSION_COMMENT_AS_ANSWER,
+  ADD_REACTION,
+  REMOVE_REACTION,
+  GET_TRENDING_DISCUSSIONS
+} from "./queries/discussionsQueries";
 
 export class GitHubService {
   // Make octokit public so components can access it directly
@@ -1299,5 +1313,140 @@ export class GitHubService {
     });
 
     return data;
+  }
+
+  // GitHub Discussions methods
+  async getRepositoryDiscussions(owner: string, repo: string, first = 20, after?: string) {
+    const { repository } = await this.octokit.graphql(GET_REPOSITORY_DISCUSSIONS, {
+      owner,
+      name: repo,
+      first,
+      after
+    });
+    return repository.discussions;
+  }
+
+  async getDiscussion(owner: string, repo: string, number: number) {
+    const { repository } = await this.octokit.graphql(GET_DISCUSSION, {
+      owner,
+      name: repo,
+      number
+    });
+    return repository.discussion;
+  }
+
+  async getDiscussionComments(owner: string, repo: string, number: number, first = 20, after?: string) {
+    const { repository } = await this.octokit.graphql(GET_DISCUSSION_COMMENTS, {
+      owner,
+      name: repo,
+      number,
+      first,
+      after
+    });
+    return repository.discussion.comments;
+  }
+
+  async getDiscussionCategories(owner: string, repo: string) {
+    const { repository } = await this.octokit.graphql(GET_DISCUSSION_CATEGORIES, {
+      owner,
+      name: repo
+    });
+    return repository.discussionCategories.nodes;
+  }
+
+  async createDiscussion(input: {
+    repositoryId: string;
+    categoryId: string;
+    title: string;
+    body: string;
+  }) {
+    const result = await this.octokit.graphql(CREATE_DISCUSSION, {
+      input
+    });
+    return result.createDiscussion.discussion;
+  }
+
+  async addDiscussionComment(input: {
+    discussionId: string;
+    body: string;
+  }) {
+    const result = await this.octokit.graphql(ADD_DISCUSSION_COMMENT, {
+      input
+    });
+    return result.addDiscussionComment.comment;
+  }
+
+  async addDiscussionReply(input: {
+    commentId: string;
+    body: string;
+  }) {
+    const result = await this.octokit.graphql(ADD_DISCUSSION_REPLY, {
+      input
+    });
+    return result.addDiscussionReply.reply;
+  }
+
+  async markDiscussionCommentAsAnswer(input: {
+    commentId: string;
+  }) {
+    const result = await this.octokit.graphql(MARK_DISCUSSION_COMMENT_AS_ANSWER, {
+      input
+    });
+    return result.markDiscussionCommentAsAnswer.discussion;
+  }
+
+  async unmarkDiscussionCommentAsAnswer(input: {
+    commentId: string;
+  }) {
+    const result = await this.octokit.graphql(UNMARK_DISCUSSION_COMMENT_AS_ANSWER, {
+      input
+    });
+    return result.unmarkDiscussionCommentAsAnswer.discussion;
+  }
+
+  async addReaction(input: {
+    subjectId: string;
+    content: 'THUMBS_UP' | 'THUMBS_DOWN' | 'LAUGH' | 'HOORAY' | 'CONFUSED' | 'HEART' | 'ROCKET' | 'EYES';
+  }) {
+    const result = await this.octokit.graphql(ADD_REACTION, {
+      input
+    });
+    return result.addReaction.reaction;
+  }
+
+  async removeReaction(input: {
+    subjectId: string;
+    content: 'THUMBS_UP' | 'THUMBS_DOWN' | 'LAUGH' | 'HOORAY' | 'CONFUSED' | 'HEART' | 'ROCKET' | 'EYES';
+  }) {
+    const result = await this.octokit.graphql(REMOVE_REACTION, {
+      input
+    });
+    return result.removeReaction.reaction;
+  }
+
+  async getTrendingDiscussions(owner: string, repo: string, days = 7) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    const { repository } = await this.octokit.graphql(GET_TRENDING_DISCUSSIONS, {
+      owner,
+      name: repo,
+      since: since.toISOString()
+    });
+    return repository.discussions.nodes;
+  }
+
+  async getRepositoryIdByName(owner: string, repo: string) {
+    const { repository } = await this.octokit.graphql(`
+      query GetRepositoryId($owner: String!, $name: String!) {
+        repository(owner: $owner, name: $name) {
+          id
+        }
+      }
+    `, {
+      owner,
+      name: repo
+    });
+    return repository.id;
   }
 }
