@@ -31,7 +31,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
   const [repository, setRepository] = useState<GitHubRepository | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"code" | "issues" | "pull-requests" | "actions" | "insights" | "analytics">("code");
+  const [activeTab, setActiveTab] = useState<"code" | "issues" | "pull-requests" | "discussions" | "actions" | "insights" | "analytics">("code");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -198,6 +198,19 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                 </button>
                 <button
                   className={`py-4 px-6 border-b-2 font-medium text-sm ${
+                    activeTab === 'discussions'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+                  onClick={() => setActiveTab('discussions')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
+                  </svg>
+                  Discussions
+                </button>
+                <button
+                  className={`py-4 px-6 border-b-2 font-medium text-sm ${
                     activeTab === 'actions'
                       ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                       : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -324,6 +337,38 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                       <p className="text-gray-600 dark:text-gray-400 mb-4">
                         Pull requests list is being loaded from the Pull Requests page. Click "View All Pull Requests" to see them.
                       </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'discussions' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-medium">Discussions</h3>
+                    <Link
+                      href={`/repositories/${ownerName}/${repoName}/discussions`}
+                      className="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      View All Discussions
+                    </Link>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="text-center py-8">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                      </svg>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">GitHub Discussions</h3>
+                      <p className="text-gray-500 dark:text-gray-400 mb-6">
+                        Collaborate with your community using GitHub Discussions.
+                      </p>
+                      <Link
+                        href={`/repositories/${ownerName}/${repoName}/discussions`}
+                        className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm"
+                      >
+                        View Discussions
+                      </Link>
                     </div>
                   </div>
                 </div>
