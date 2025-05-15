@@ -29,9 +29,12 @@ export interface GitHubRepository {
   license: {
     key: string;
     name: string;
-    url: string;
+    url: string | null;
+    spdx_id?: string | null;
+    node_id?: string;
+    html_url?: string;
   } | null;
-  topics: string[];
+  topics: string[] | undefined;
   default_branch: string;
   visibility: string;
 }
