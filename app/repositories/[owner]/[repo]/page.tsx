@@ -12,6 +12,7 @@ import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import FileExplorer from "../../../components/repository/FileExplorer";
 import ActivityFeed from "../../../components/repository/ActivityFeed";
 import Contributors from "../../../components/repository/Contributors";
+import RepositoryProjects from "../../../components/repository/RepositoryProjects";
 
 interface RepositoryDetailPageProps {
   params: {
@@ -31,7 +32,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
   const [repository, setRepository] = useState<GitHubRepository | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"code" | "issues" | "pull-requests" | "discussions" | "actions" | "insights" | "analytics">("code");
+  const [activeTab, setActiveTab] = useState<"code" | "issues" | "pull-requests" | "discussions" | "actions" | "projects" | "insights" | "analytics">("code");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -47,7 +48,8 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
           setError(null);
 
           const repoData = await githubService.getRepository(ownerName, repoName);
-          setRepository(repoData);
+          // Use type assertion to handle potential type mismatches
+          setRepository(repoData as unknown as GitHubRepository);
         } catch (err) {
           console.error("Error fetching repository:", err);
           setError("Failed to fetch repository. Please try again later.");
@@ -117,7 +119,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
               )}
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {repository.topics && repository.topics.map(topic => (
+                {repository.topics && repository.topics.length > 0 && repository.topics.map(topic => (
                   <span
                     key={topic}
                     className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full"
@@ -221,6 +223,20 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                     <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
                   </svg>
                   Actions
+                </button>
+                <button
+                  className={`py-4 px-6 border-b-2 font-medium text-sm ${
+                    activeTab === 'projects'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+                  onClick={() => setActiveTab('projects')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5z" clipRule="evenodd" />
+                    <path d="M7 7h6v2H7V7zm0 4h6v2H7v-2z" />
+                  </svg>
+                  Projects
                 </button>
                 <button
                   className={`py-4 px-6 border-b-2 font-medium text-sm ${
@@ -403,6 +419,28 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
                       </Link>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'projects' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-medium">Repository Projects</h3>
+                    <a
+                      href={`https://github.com/${ownerName}/${repoName}/projects`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                      </svg>
+                      View on GitHub
+                    </a>
+                  </div>
+
+                  <RepositoryProjects owner={ownerName} repo={repoName} />
                 </div>
               )}
 
