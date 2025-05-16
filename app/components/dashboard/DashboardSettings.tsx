@@ -1,18 +1,23 @@
 "use client";
 
 import { FC, useState, useEffect } from 'react';
-import { 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter, 
-  Button, 
-  Checkbox, 
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Checkbox,
   CheckboxGroup,
   Divider,
   Tooltip,
-  useDisclosure
+  useDisclosure,
+  Tabs,
+  Tab,
+  Input,
+  Select,
+  SelectItem
 } from '@nextui-org/react';
 
 export interface DashboardConfig {
@@ -50,12 +55,12 @@ const DashboardSettings: FC<DashboardSettingsProps> = ({
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [localConfig, setLocalConfig] = useState<DashboardConfig>(config);
-  
+
   // Update local config when props change
   useEffect(() => {
     setLocalConfig(config);
   }, [config]);
-  
+
   // Handle checkbox changes
   const handleCheckboxChange = (key: keyof DashboardConfig) => {
     setLocalConfig(prev => ({
@@ -63,17 +68,29 @@ const DashboardSettings: FC<DashboardSettingsProps> = ({
       [key]: !prev[key]
     }));
   };
-  
+
   // Handle select changes
-  const handleSelectChange = (key: keyof DashboardConfig, value: any) => {
+  const handleSelectChange = (key: keyof DashboardConfig) => (e: React.ChangeEvent<HTMLSelectElement>) => {
     setLocalConfig(prev => ({
       ...prev,
-      [key]: value
+      [key]: e.target.value
     }));
   };
-  
+
+  // Handle NextUI select changes
+  const handleNextUISelectChange = (key: keyof DashboardConfig, value: string | Set<string>) => {
+    if (value instanceof Set && value.size > 0) {
+      const selectedValue = Array.from(value)[0];
+      setLocalConfig(prev => ({
+        ...prev,
+        [key]: selectedValue
+      }));
+    }
+  };
+
   // Handle number input changes
-  const handleNumberChange = (key: keyof DashboardConfig, value: string) => {
+  const handleNumberChange = (key: keyof DashboardConfig) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     const numValue = parseInt(value, 10);
     if (!isNaN(numValue) && numValue > 0) {
       setLocalConfig(prev => ({
@@ -82,16 +99,16 @@ const DashboardSettings: FC<DashboardSettingsProps> = ({
       }));
     }
   };
-  
+
   // Save changes
   const handleSave = () => {
     onConfigChange(localConfig);
     onClose();
-    
+
     // Save to localStorage
     localStorage.setItem('github-nexus-dashboard-config', JSON.stringify(localConfig));
   };
-  
+
   // Reset to defaults
   const handleReset = () => {
     setLocalConfig(DEFAULT_CONFIG);
@@ -111,133 +128,124 @@ const DashboardSettings: FC<DashboardSettingsProps> = ({
           </svg>
         </Button>
       </Tooltip>
-      
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        size="lg"
+        scrollBehavior="inside"
+        classNames={{
+          base: "bg-white dark:bg-gray-900",
+          header: "border-b border-gray-200 dark:border-gray-800",
+          footer: "border-t border-gray-200 dark:border-gray-800"
+        }}
+      >
         <ModalContent>
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
                 Dashboard Settings
               </ModalHeader>
-              
+
               <ModalBody>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Visible Sections</h3>
-                    <div className="space-y-2">
-                      <Checkbox
-                        isSelected={localConfig.showStatistics}
-                        onValueChange={() => handleCheckboxChange('showStatistics')}
+                <Tabs aria-label="Dashboard Settings Options" fullWidth>
+                  <Tab key="visible-sections" title="Visible Sections">
+                    <div className="py-2">
+                      <CheckboxGroup
+                        label="Select which sections to display on your dashboard"
+                        orientation="vertical"
+                        color="primary"
                       >
-                        Statistics Cards
-                      </Checkbox>
-                      
-                      <Checkbox
-                        isSelected={localConfig.showContributionChart}
-                        onValueChange={() => handleCheckboxChange('showContributionChart')}
-                      >
-                        Contribution Chart
-                      </Checkbox>
-                      
-                      <Checkbox
-                        isSelected={localConfig.showContributionHeatmap}
-                        onValueChange={() => handleCheckboxChange('showContributionHeatmap')}
-                      >
-                        Contribution Heatmap
-                      </Checkbox>
-                      
-                      <Checkbox
-                        isSelected={localConfig.showProjectProgress}
-                        onValueChange={() => handleCheckboxChange('showProjectProgress')}
-                      >
-                        Project Progress
-                      </Checkbox>
-                      
-                      <Checkbox
-                        isSelected={localConfig.showActivityTimeline}
-                        onValueChange={() => handleCheckboxChange('showActivityTimeline')}
-                      >
-                        Activity Timeline
-                      </Checkbox>
-                    </div>
-                  </div>
-                  
-                  <Divider />
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Chart Settings</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Contribution Chart Type
-                        </label>
-                        <select
-                          value={localConfig.contributionChartType}
-                          onChange={(e) => handleSelectChange('contributionChartType', e.target.value)}
-                          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                        <Checkbox
+                          isSelected={localConfig.showStatistics}
+                          onValueChange={() => handleCheckboxChange('showStatistics')}
                         >
-                          <option value="bar">Bar Chart</option>
-                          <option value="pie">Pie Chart</option>
-                        </select>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Contribution Metric
-                        </label>
-                        <select
-                          value={localConfig.contributionMetric}
-                          onChange={(e) => handleSelectChange('contributionMetric', e.target.value)}
-                          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                          Statistics Cards
+                        </Checkbox>
+
+                        <Checkbox
+                          isSelected={localConfig.showContributionChart}
+                          onValueChange={() => handleCheckboxChange('showContributionChart')}
                         >
-                          <option value="commits">Commits</option>
-                          <option value="pullRequests">Pull Requests</option>
-                          <option value="issues">Issues</option>
-                          <option value="reviews">Reviews</option>
-                        </select>
-                      </div>
+                          Contribution Chart
+                        </Checkbox>
+
+                        <Checkbox
+                          isSelected={localConfig.showContributionHeatmap}
+                          onValueChange={() => handleCheckboxChange('showContributionHeatmap')}
+                        >
+                          Contribution Heatmap
+                        </Checkbox>
+
+                        <Checkbox
+                          isSelected={localConfig.showProjectProgress}
+                          onValueChange={() => handleCheckboxChange('showProjectProgress')}
+                        >
+                          Project Progress
+                        </Checkbox>
+
+                        <Checkbox
+                          isSelected={localConfig.showActivityTimeline}
+                          onValueChange={() => handleCheckboxChange('showActivityTimeline')}
+                        >
+                          Activity Timeline
+                        </Checkbox>
+                      </CheckboxGroup>
                     </div>
-                  </div>
-                  
-                  <Divider />
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Content Limits</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Activity Timeline Items
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={localConfig.activityLimit}
-                          onChange={(e) => handleNumberChange('activityLimit', e.target.value)}
-                          className="block w-full pl-3 pr-3 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Project Progress Items
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="5"
-                          value={localConfig.projectLimit}
-                          onChange={(e) => handleNumberChange('projectLimit', e.target.value)}
-                          className="block w-full pl-3 pr-3 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                        />
-                      </div>
+                  </Tab>
+
+                  <Tab key="chart-settings" title="Chart Settings">
+                    <div className="py-2 space-y-4">
+                      <Select
+                        label="Contribution Chart Type"
+                        selectedKeys={[localConfig.contributionChartType]}
+                        onSelectionChange={(keys) => handleNextUISelectChange('contributionChartType', keys)}
+                        className="w-full"
+                      >
+                        <SelectItem key="bar" value="bar">Bar Chart</SelectItem>
+                        <SelectItem key="pie" value="pie">Pie Chart</SelectItem>
+                      </Select>
+
+                      <Select
+                        label="Contribution Metric"
+                        selectedKeys={[localConfig.contributionMetric]}
+                        onSelectionChange={(keys) => handleNextUISelectChange('contributionMetric', keys)}
+                        className="w-full"
+                      >
+                        <SelectItem key="commits" value="commits">Commits</SelectItem>
+                        <SelectItem key="pullRequests" value="pullRequests">Pull Requests</SelectItem>
+                        <SelectItem key="issues" value="issues">Issues</SelectItem>
+                        <SelectItem key="reviews" value="reviews">Reviews</SelectItem>
+                      </Select>
                     </div>
-                  </div>
-                </div>
+                  </Tab>
+
+                  <Tab key="content-limits" title="Content Limits">
+                    <div className="py-2 space-y-4">
+                      <Input
+                        type="number"
+                        label="Activity Timeline Items"
+                        min={1}
+                        max={10}
+                        value={localConfig.activityLimit.toString()}
+                        onChange={handleNumberChange('activityLimit')}
+                        className="w-full"
+                      />
+
+                      <Input
+                        type="number"
+                        label="Project Progress Items"
+                        min={1}
+                        max={5}
+                        value={localConfig.projectLimit.toString()}
+                        onChange={handleNumberChange('projectLimit')}
+                        className="w-full"
+                      />
+                    </div>
+                  </Tab>
+                </Tabs>
               </ModalBody>
-              
+
               <ModalFooter>
                 <Button variant="flat" onPress={handleReset}>
                   Reset to Defaults
