@@ -59,123 +59,137 @@ const ContributionChart: FC<ContributionChartProps> = ({
   const [error, setError] = useState<string | null>(null);
   const chartRef = useRef<any>(null);
 
-  useEffect(() => {
-    async function fetchContributions() {
-      if (!githubService) return;
+  const fetchContributions = async () => {
+    if (!githubService) return;
 
-      try {
-        setIsLoading(true);
-        setError(null);
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        // Get user's repositories
-        const user = await githubService.getCurrentUser();
-        const repos = await githubService.getUserRepositories(user.login, 1, 10);
+      // Get user's repositories
+      const user = await githubService.getCurrentUser();
+      const repos = await githubService.getUserRepositories(user.login, 1, 10);
 
-        // For each repository, get contributors
-        const contributionsMap = new Map<string, ContributionData>();
+      // Add current user to the map with default values
+      const contributionsMap = new Map<string, ContributionData>();
+      contributionsMap.set(user.login, {
+        user: {
+          login: user.login,
+          avatar_url: user.avatar_url
+        },
+        contributions: {
+          commits: 0,
+          pullRequests: 0,
+          issues: 0,
+          reviews: 0
+        }
+      });
 
-        await Promise.all(
-          repos.map(async (repo: any) => {
-            try {
-              const repoContributors = await githubService.getRepositoryContributors(repo.owner.login, repo.name);
+      // For each repository, get contributors
+      await Promise.all(
+        repos.map(async (repo: any) => {
+          try {
+            const repoContributors = await githubService.getRepositoryContributors(repo.owner.login, repo.name);
 
-              repoContributors.forEach((contributor: any) => {
-                const login = contributor.login;
+            repoContributors.forEach((contributor: any) => {
+              const login = contributor.login;
 
-                if (!contributionsMap.has(login)) {
-                  contributionsMap.set(login, {
-                    user: {
-                      login,
-                      avatar_url: contributor.avatar_url
-                    },
-                    contributions: {
-                      commits: 0,
-                      pullRequests: 0,
-                      issues: 0,
-                      reviews: 0
-                    }
-                  });
-                }
+              if (!contributionsMap.has(login)) {
+                contributionsMap.set(login, {
+                  user: {
+                    login,
+                    avatar_url: contributor.avatar_url
+                  },
+                  contributions: {
+                    commits: 0,
+                    pullRequests: 0,
+                    issues: 0,
+                    reviews: 0
+                  }
+                });
+              }
 
-                const userData = contributionsMap.get(login)!;
-                userData.contributions.commits += contributor.contributions;
-                contributionsMap.set(login, userData);
-              });
+              const userData = contributionsMap.get(login)!;
+              userData.contributions.commits += contributor.contributions;
+              contributionsMap.set(login, userData);
+            });
 
-              // Get pull requests
-              const pulls = await githubService.getPullRequests(repo.owner.login, repo.name, 1, 100);
+            // Get pull requests
+            const pulls = await githubService.getPullRequests(repo.owner.login, repo.name, 1, 100);
 
-              pulls.forEach((pr: any) => {
-                const login = pr.user.login;
+            pulls.forEach((pr: any) => {
+              if (!pr.user) return;
+              const login = pr.user.login;
 
-                if (!contributionsMap.has(login)) {
-                  contributionsMap.set(login, {
-                    user: {
-                      login,
-                      avatar_url: pr.user.avatar_url
-                    },
-                    contributions: {
-                      commits: 0,
-                      pullRequests: 0,
-                      issues: 0,
-                      reviews: 0
-                    }
-                  });
-                }
+              if (!contributionsMap.has(login)) {
+                contributionsMap.set(login, {
+                  user: {
+                    login,
+                    avatar_url: pr.user.avatar_url
+                  },
+                  contributions: {
+                    commits: 0,
+                    pullRequests: 0,
+                    issues: 0,
+                    reviews: 0
+                  }
+                });
+              }
 
-                const userData = contributionsMap.get(login)!;
-                userData.contributions.pullRequests += 1;
-                contributionsMap.set(login, userData);
-              });
+              const userData = contributionsMap.get(login)!;
+              userData.contributions.pullRequests += 1;
+              contributionsMap.set(login, userData);
+            });
 
-              // Get issues
-              const issues = await githubService.getIssues(repo.owner.login, repo.name, 1, 100);
+            // Get issues
+            const issues = await githubService.getIssues(repo.owner.login, repo.name, 1, 100);
 
-              issues.forEach((issue: any) => {
-                // Skip pull requests (they are also returned as issues)
-                if (issue.pull_request) return;
+            issues.forEach((issue: any) => {
+              // Skip pull requests (they are also returned as issues)
+              if (issue.pull_request || !issue.user) return;
 
-                const login = issue.user.login;
+              const login = issue.user.login;
 
-                if (!contributionsMap.has(login)) {
-                  contributionsMap.set(login, {
-                    user: {
-                      login,
-                      avatar_url: issue.user.avatar_url
-                    },
-                    contributions: {
-                      commits: 0,
-                      pullRequests: 0,
-                      issues: 0,
-                      reviews: 0
-                    }
-                  });
-                }
+              if (!contributionsMap.has(login)) {
+                contributionsMap.set(login, {
+                  user: {
+                    login,
+                    avatar_url: issue.user.avatar_url
+                  },
+                  contributions: {
+                    commits: 0,
+                    pullRequests: 0,
+                    issues: 0,
+                    reviews: 0
+                  }
+                });
+              }
 
-                const userData = contributionsMap.get(login)!;
-                userData.contributions.issues += 1;
-                contributionsMap.set(login, userData);
-              });
-            } catch (err) {
-              console.error(`Error fetching data for ${repo.full_name}:`, err);
-            }
-          })
-        );
+              const userData = contributionsMap.get(login)!;
+              userData.contributions.issues += 1;
+              contributionsMap.set(login, userData);
+            });
+          } catch (err) {
+            console.error(`Error fetching data for ${repo.full_name}:`, err);
+          }
+        })
+      );
 
-        // Convert map to array and sort by selected metric
-        const contributionsArray = Array.from(contributionsMap.values())
-          .sort((a, b) => b.contributions[metric] - a.contributions[metric])
-          .slice(0, limit);
+      // Convert map to array and sort by selected metric
+      const contributionsArray = Array.from(contributionsMap.values())
+        .sort((a, b) => b.contributions[metric] - a.contributions[metric])
+        .slice(0, limit);
 
-        setContributions(contributionsArray);
-      } catch (err) {
-        console.error("Error fetching contributions:", err);
-        setError("Failed to load contribution data. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
+      setContributions(contributionsArray);
+    } catch (err) {
+      console.error("Error fetching contributions:", err);
+      setError("Failed to load contribution data. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
+  };
 
+  useEffect(() => {
     fetchContributions();
   }, [githubService, metric, limit]);
 
@@ -198,8 +212,14 @@ const ContributionChart: FC<ContributionChartProps> = ({
 
   if (error) {
     return (
-      <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-4 rounded-md">
-        {error}
+      <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-4 rounded-md flex items-center justify-between">
+        <div>{error}</div>
+        <button
+          onClick={() => fetchContributions()}
+          className="px-3 py-1 bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 rounded-md text-sm hover:bg-red-300 dark:hover:bg-red-700 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -216,17 +236,29 @@ const ContributionChart: FC<ContributionChartProps> = ({
   const labels = contributions.map(item => item.user.login);
   const data = contributions.map(item => item.contributions[metric]);
 
+  // If no data, add a placeholder
+  if (labels.length === 0) {
+    labels.push('No data');
+    data.push(0);
+  }
+
   // Generate colors for each contributor
   const generateColors = (count: number) => {
     const colors = [];
+    const baseHues = [210, 330, 120, 25, 270, 180, 60, 0, 310, 160]; // Predefined hues for better color distribution
+
     for (let i = 0; i < count; i++) {
-      const hue = (i * 137.5) % 360; // Use golden angle approximation for nice distribution
+      // Use predefined hues for first 10 items, then use golden angle for the rest
+      const hue = i < baseHues.length
+        ? baseHues[i]
+        : (i * 137.5) % 360; // Golden angle approximation
+
       colors.push(`hsl(${hue}, 70%, 60%)`);
     }
     return colors;
   };
 
-  const backgroundColor = generateColors(labels.length);
+  const backgroundColor = generateColors(Math.max(1, labels.length));
 
   const chartData = {
     labels,
@@ -309,23 +341,100 @@ const ContributionChart: FC<ContributionChartProps> = ({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-      <div className="h-80">
+      <div className="h-[300px] w-full flex items-center justify-center">
         {chartType === 'bar' ? (
           <Bar
             ref={chartRef}
             data={chartData}
-            options={barOptions}
+            options={{
+              ...barOptions,
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                ...barOptions.plugins,
+                legend: {
+                  ...barOptions.plugins.legend,
+                  labels: {
+                    color: 'rgb(156, 163, 175)',
+                    font: {
+                      size: 12
+                    }
+                  }
+                },
+                title: {
+                  ...barOptions.plugins.title,
+                  color: 'rgb(156, 163, 175)',
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                }
+              },
+              scales: {
+                y: {
+                  ...barOptions.scales.y,
+                  ticks: {
+                    color: 'rgb(156, 163, 175)'
+                  },
+                  grid: {
+                    color: 'rgba(156, 163, 175, 0.1)'
+                  }
+                },
+                x: {
+                  ticks: {
+                    color: 'rgb(156, 163, 175)'
+                  },
+                  grid: {
+                    color: 'rgba(156, 163, 175, 0.1)'
+                  }
+                }
+              }
+            }}
           />
         ) : (
           <Pie
             ref={chartRef}
             data={chartData}
-            options={pieOptions}
+            options={{
+              ...pieOptions,
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                ...pieOptions.plugins,
+                legend: {
+                  ...pieOptions.plugins.legend,
+                  position: 'bottom',
+                  labels: {
+                    color: 'rgb(156, 163, 175)',
+                    font: {
+                      size: 12
+                    },
+                    padding: 20,
+                    usePointStyle: true,
+                    boxWidth: 8
+                  }
+                },
+                title: {
+                  ...pieOptions.plugins.title,
+                  color: 'rgb(156, 163, 175)',
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                }
+              }
+            }}
           />
         )}
       </div>
       <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-        User Commits Distribution
+        {metric === "commits"
+          ? "User Commits Distribution"
+          : metric === "pullRequests"
+          ? "User Pull Requests Distribution"
+          : metric === "issues"
+          ? "User Issues Distribution"
+          : "User Reviews Distribution"}
       </div>
     </div>
   );
