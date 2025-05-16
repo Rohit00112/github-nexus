@@ -499,6 +499,112 @@ export class GitHubService {
     return data;
   }
 
+  // Get user contribution calendar (for heatmap)
+  async getUserContributionCalendar(username: string, year: number) {
+    // This is a simplified implementation since GitHub's API doesn't directly provide this data
+    // In a real app, you would use GitHub's GraphQL API to get the actual contribution calendar
+
+    // For now, we'll generate mock data based on commit activity from repositories
+    try {
+      // Get user's repositories
+      const repos = await this.getUserRepositories(username, 1, 10);
+
+      // Generate a full year of empty data
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year, 11, 31);
+
+      // Create weeks array
+      const weeks = [];
+      let currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        // Create a week
+        const week: any = { days: [] };
+
+        // Add days for this week (Sunday to Saturday)
+        for (let i = 0; i < 7; i++) {
+          if (currentDate <= endDate) {
+            week.days.push({
+              date: currentDate.toISOString().split('T')[0],
+              count: 0,
+              level: 0
+            });
+
+            // Move to next day
+            currentDate = new Date(currentDate);
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+        }
+
+        weeks.push(week);
+      }
+
+      // Fill in commit data from repositories
+      for (const repo of repos.slice(0, 5)) { // Limit to 5 repos for performance
+        try {
+          // Get commit activity
+          const commitActivity = await this.getCommitActivity(repo.owner.login, repo.name);
+
+          // Process each week
+          commitActivity.forEach((week: any) => {
+            const weekTimestamp = week.week * 1000; // Convert to milliseconds
+            const weekDate = new Date(weekTimestamp);
+
+            // Skip if not in the target year
+            if (weekDate.getFullYear() !== year) return;
+
+            // Process each day in the week
+            week.days.forEach((count: number, dayIndex: number) => {
+              // Calculate the date for this day
+              const dayDate = new Date(weekTimestamp);
+              dayDate.setDate(dayDate.getDate() + dayIndex);
+
+              // Skip if not in the target year
+              if (dayDate.getFullYear() !== year) return;
+
+              // Find the corresponding day in our data structure
+              const dateString = dayDate.toISOString().split('T')[0];
+
+              // Find the week and day
+              for (const weekData of weeks) {
+                const dayData = weekData.days.find((d: any) => d.date === dateString);
+                if (dayData) {
+                  dayData.count += count;
+
+                  // Set level based on count
+                  if (count === 0) dayData.level = 0;
+                  else if (count <= 2) dayData.level = 1;
+                  else if (count <= 5) dayData.level = 2;
+                  else if (count <= 10) dayData.level = 3;
+                  else dayData.level = 4;
+
+                  break;
+                }
+              }
+            });
+          });
+        } catch (err) {
+          console.error(`Error fetching commit activity for ${repo.full_name}:`, err);
+        }
+      }
+
+      return { weeks };
+    } catch (err) {
+      console.error("Error generating contribution calendar:", err);
+      throw err;
+    }
+  }
+
+  // Get repository contributors
+  async getRepositoryContributors(owner: string, repo: string) {
+    const { data } = await this.octokit.rest.repos.listContributors({
+      owner,
+      repo,
+      per_page: 100
+    });
+    return data;
+  }
+
   async getPunchCard(owner: string, repo: string) {
     const { data } = await this.octokit.rest.repos.getPunchCardStats({
       owner,
@@ -1006,6 +1112,10 @@ export class GitHubService {
       page,
     });
     return data;
+  }
+
+  async getProjectColumnCards(column_id: number, page = 1, perPage = 100) {
+    return this.getColumnCards(column_id, page, perPage);
   }
 
   async getCard(card_id: number) {

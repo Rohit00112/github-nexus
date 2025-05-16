@@ -16,10 +16,16 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/repositories"
+              href="/dashboard"
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
             >
-              Get Started
+              Dashboard
+            </Link>
+            <Link
+              href="/repositories"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+            >
+              Repositories
             </Link>
             <Link
               href="/documentation"
