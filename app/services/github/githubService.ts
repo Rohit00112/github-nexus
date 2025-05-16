@@ -1114,6 +1114,10 @@ export class GitHubService {
     return data;
   }
 
+  async getProjectColumnCards(column_id: number, page = 1, perPage = 100) {
+    return this.getColumnCards(column_id, page, perPage);
+  }
+
   async getCard(card_id: number) {
     const { data } = await this.octokit.rest.projects.getCard({
       card_id,

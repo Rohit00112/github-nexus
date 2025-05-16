@@ -62,26 +62,26 @@ const ContributionChart: FC<ContributionChartProps> = ({
   useEffect(() => {
     async function fetchContributions() {
       if (!githubService) return;
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // Get user's repositories
         const user = await githubService.getCurrentUser();
         const repos = await githubService.getUserRepositories(user.login, 1, 10);
-        
+
         // For each repository, get contributors
         const contributionsMap = new Map<string, ContributionData>();
-        
+
         await Promise.all(
           repos.map(async (repo: any) => {
             try {
               const repoContributors = await githubService.getRepositoryContributors(repo.owner.login, repo.name);
-              
+
               repoContributors.forEach((contributor: any) => {
                 const login = contributor.login;
-                
+
                 if (!contributionsMap.has(login)) {
                   contributionsMap.set(login, {
                     user: {
@@ -96,18 +96,18 @@ const ContributionChart: FC<ContributionChartProps> = ({
                     }
                   });
                 }
-                
+
                 const userData = contributionsMap.get(login)!;
                 userData.contributions.commits += contributor.contributions;
                 contributionsMap.set(login, userData);
               });
-              
+
               // Get pull requests
               const pulls = await githubService.getPullRequests(repo.owner.login, repo.name, 1, 100);
-              
+
               pulls.forEach((pr: any) => {
                 const login = pr.user.login;
-                
+
                 if (!contributionsMap.has(login)) {
                   contributionsMap.set(login, {
                     user: {
@@ -122,21 +122,21 @@ const ContributionChart: FC<ContributionChartProps> = ({
                     }
                   });
                 }
-                
+
                 const userData = contributionsMap.get(login)!;
                 userData.contributions.pullRequests += 1;
                 contributionsMap.set(login, userData);
               });
-              
+
               // Get issues
               const issues = await githubService.getIssues(repo.owner.login, repo.name, 1, 100);
-              
+
               issues.forEach((issue: any) => {
                 // Skip pull requests (they are also returned as issues)
                 if (issue.pull_request) return;
-                
+
                 const login = issue.user.login;
-                
+
                 if (!contributionsMap.has(login)) {
                   contributionsMap.set(login, {
                     user: {
@@ -151,7 +151,7 @@ const ContributionChart: FC<ContributionChartProps> = ({
                     }
                   });
                 }
-                
+
                 const userData = contributionsMap.get(login)!;
                 userData.contributions.issues += 1;
                 contributionsMap.set(login, userData);
@@ -161,12 +161,12 @@ const ContributionChart: FC<ContributionChartProps> = ({
             }
           })
         );
-        
+
         // Convert map to array and sort by selected metric
         const contributionsArray = Array.from(contributionsMap.values())
           .sort((a, b) => b.contributions[metric] - a.contributions[metric])
           .slice(0, limit);
-        
+
         setContributions(contributionsArray);
       } catch (err) {
         console.error("Error fetching contributions:", err);
@@ -175,7 +175,7 @@ const ContributionChart: FC<ContributionChartProps> = ({
         setIsLoading(false);
       }
     }
-    
+
     fetchContributions();
   }, [githubService, metric, limit]);
 
@@ -308,20 +308,25 @@ const ContributionChart: FC<ContributionChartProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 h-96">
-      {chartType === 'bar' ? (
-        <Bar 
-          ref={chartRef}
-          data={chartData} 
-          options={barOptions} 
-        />
-      ) : (
-        <Pie 
-          ref={chartRef}
-          data={chartData} 
-          options={pieOptions} 
-        />
-      )}
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+      <div className="h-80">
+        {chartType === 'bar' ? (
+          <Bar
+            ref={chartRef}
+            data={chartData}
+            options={barOptions}
+          />
+        ) : (
+          <Pie
+            ref={chartRef}
+            data={chartData}
+            options={pieOptions}
+          />
+        )}
+      </div>
+      <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+        User Commits Distribution
+      </div>
     </div>
   );
 };
