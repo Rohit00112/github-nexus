@@ -317,6 +317,16 @@ export class GitHubService {
     return data;
   }
 
+  // User activity methods
+  async getUserEvents(username: string, perPage = 30, page = 1) {
+    const { data } = await this.octokit.rest.activity.listEventsForUser({
+      username,
+      per_page: perPage,
+      page,
+    });
+    return data;
+  }
+
   async getRepositoryNotifications(owner: string, repo: string, options?: {
     all?: boolean;
     participating?: boolean;
