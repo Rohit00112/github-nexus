@@ -9,6 +9,8 @@ import ActivityStatistics from "../components/activity/ActivityStatistics";
 import ActivityFilters, { ActivityFilters as ActivityFiltersType } from "../components/activity/ActivityFilters";
 import EnhancedActivityTimeline from "../components/activity/EnhancedActivityTimeline";
 import ActivityCalendar from "../components/activity/ActivityCalendar";
+import RepositoryActivity from "../components/activity/RepositoryActivity";
+import ContributionsAnalysis from "../components/activity/ContributionsAnalysis";
 
 // Mark this page as dynamically rendered
 export const dynamic = 'force-dynamic';
@@ -47,14 +49,14 @@ export default function ActivityPage() {
   useEffect(() => {
     async function fetchRepositories() {
       if (!githubService) return;
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const user = await githubService.getCurrentUser();
         const repos = await githubService.getUserRepositories(user.login, 1, 100);
-        
+
         setRepositories(repos.map((repo: any) => ({
           name: repo.name,
           full_name: repo.full_name
@@ -66,7 +68,7 @@ export default function ActivityPage() {
         setIsLoading(false);
       }
     }
-    
+
     fetchRepositories();
   }, [githubService]);
 
@@ -74,15 +76,15 @@ export default function ActivityPage() {
   useEffect(() => {
     async function fetchActivityStats() {
       if (!githubService) return;
-      
+
       try {
         setIsLoading(true);
-        
+
         const user = await githubService.getCurrentUser();
-        
+
         // Get user events
         const events = await githubService.getUserEvents(user.login, 100);
-        
+
         // Count different event types
         const stats = {
           commits: 0,
@@ -92,7 +94,7 @@ export default function ActivityPage() {
           comments: 0,
           repositories: repositories.length
         };
-        
+
         events.forEach((event: any) => {
           switch (event.type) {
             case 'PushEvent':
@@ -114,7 +116,7 @@ export default function ActivityPage() {
               break;
           }
         });
-        
+
         setActivityStats(stats);
       } catch (err) {
         console.error("Error fetching activity stats:", err);
@@ -122,7 +124,7 @@ export default function ActivityPage() {
         setIsLoading(false);
       }
     }
-    
+
     if (repositories.length > 0) {
       fetchActivityStats();
     }
@@ -165,7 +167,7 @@ export default function ActivityPage() {
 
       {/* Tabs */}
       <div className="mb-6">
-        <Tabs 
+        <Tabs
           selectedKey={activeTab}
           onSelectionChange={(key) => setActiveTab(key as string)}
           variant="underlined"
@@ -179,7 +181,7 @@ export default function ActivityPage() {
       </div>
 
       {/* Filters */}
-      <ActivityFilters 
+      <ActivityFilters
         filters={filters}
         onFiltersChange={setFilters}
         repositories={repositories}
@@ -190,38 +192,13 @@ export default function ActivityPage() {
         {activeTab === "timeline" && (
           <EnhancedActivityTimeline filters={filters} pageSize={10} />
         )}
-        
+
         {activeTab === "repositories" && (
-          <Card>
-            <CardBody className="p-6">
-              <div className="text-center py-12">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">Repository Activity Coming Soon</h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Detailed repository activity analysis will be available in a future update.
-                </p>
-              </div>
-            </CardBody>
-          </Card>
+          <RepositoryActivity filters={filters} />
         )}
-        
+
         {activeTab === "contributions" && (
-          <Card>
-            <CardBody className="p-6">
-              <div className="text-center py-12">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">Contribution Analysis Coming Soon</h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Detailed contribution analysis will be available in a future update.
-                </p>
-              </div>
-            </CardBody>
-          </Card>
+          <ContributionsAnalysis filters={filters} />
         )}
       </div>
     </div>
