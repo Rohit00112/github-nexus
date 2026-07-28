@@ -18,9 +18,31 @@ export const metadata: Metadata = {
   title: "GitHub Nexus",
   description: "A Web-Based Full Workflow Automation Hub Using GitHub API",
   icons: {
-    icon: '/logo.svg',
+    icon: "/logo.svg",
   },
 };
+
+/**
+ * Applies the stored theme before first paint so the page never flashes the
+ * wrong palette. Dark is the default when nothing is stored.
+ */
+const themeScript = `
+(function() {
+  try {
+    var stored = localStorage.getItem('github-nexus:theme');
+    var resolved = stored === 'light' || stored === 'dark' ? stored
+      : stored === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : 'dark';
+    var root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(resolved);
+    root.style.colorScheme = resolved;
+  } catch (e) {
+    document.documentElement.classList.add('dark');
+  }
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -28,14 +50,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthContext>
-          <Providers>
-            {children}
-          </Providers>
+          <Providers>{children}</Providers>
         </AuthContext>
       </body>
     </html>

@@ -26,7 +26,7 @@ export default function Home() {
             </Link>
             <Link
               href="/repositories"
-              className="border border-border bg-card text-foreground hover:bg-accent font-medium py-2.5 px-6 rounded-xl transition-colors text-sm"
+              className="border border-border bg-card text-foreground hover:bg-surface-hover font-medium py-2.5 px-6 rounded-xl transition-colors text-sm"
             >
               Browse Repositories
             </Link>

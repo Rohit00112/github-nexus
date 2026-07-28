@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
 import { useGitHub } from "../context/GitHubContext";
-import { Tab, Tabs } from "@nextui-org/react";
 import MainLayout from "../components/layout/MainLayout";
+import PageHeader from "../components/layout/PageHeader";
+import { ErrorState, Spinner, Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui";
 import ActivityStatistics from "../components/activity/ActivityStatistics";
 import ActivityFilters, { ActivityFilters as ActivityFiltersType } from "../components/activity/ActivityFilters";
 import EnhancedActivityTimeline from "../components/activity/EnhancedActivityTimeline";
@@ -22,7 +23,7 @@ export default function ActivityPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("timeline");
   const [isLoading, setIsLoading] = useState(true);
-  const [_error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [repositories, setRepositories] = useState<{ name: string; full_name: string }[]>([]);
   const [activityStats, setActivityStats] = useState({
     commits: 0, pullRequests: 0, issues: 0, reviews: 0, comments: 0, repositories: 0,
@@ -89,8 +90,8 @@ export default function ActivityPage() {
   if (authLoading || githubLoading) {
     return (
       <MainLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+        <div className="flex h-64 items-center justify-center">
+          <Spinner size={20} label="Loading activity" />
         </div>
       </MainLayout>
     );
@@ -99,54 +100,48 @@ export default function ActivityPage() {
   if (!isAuthenticated) {
     return (
       <MainLayout>
-        <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 p-4 rounded-xl text-sm">
-          Please sign in to view your activity.
-        </div>
+        <ErrorState title="Sign in required" message="Sign in to view your activity." />
       </MainLayout>
     );
   }
 
   return (
     <MainLayout>
-      <div className="py-2">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Activity Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track and analyze your GitHub activity across repositories</p>
-        </div>
+      <PageHeader
+        title="Activity"
+        description="Track and analyze your GitHub activity across repositories"
+      />
 
-        <div className="mb-8">
-          <ActivityStatistics stats={activityStats} isLoading={isLoading} />
-        </div>
+      <div className="space-y-6">
+        <ActivityStatistics stats={activityStats} isLoading={isLoading} />
 
-        <div className="mb-8">
-          <ActivityCalendar />
-        </div>
+        <ActivityCalendar />
 
-        <div className="mb-6">
-          <Tabs
-            selectedKey={activeTab}
-            onSelectionChange={(key) => setActiveTab(key as string)}
-            variant="underlined"
-            size="lg"
-            aria-label="Activity tabs"
-          >
-            <Tab key="timeline" title="Activity Timeline" />
-            <Tab key="repositories" title="Repository Activity" />
-            <Tab key="contributions" title="Contributions" />
-          </Tabs>
-        </div>
+        {error && <ErrorState message={error} />}
 
-        <ActivityFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-          repositories={repositories}
-        />
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
+            <TabsTrigger value="repositories">Repositories</TabsTrigger>
+            <TabsTrigger value="contributions">Contributions</TabsTrigger>
+          </TabsList>
 
-        <div>
-          {activeTab === "timeline" && <EnhancedActivityTimeline filters={filters} pageSize={10} />}
-          {activeTab === "repositories" && <RepositoryActivity filters={filters} />}
-          {activeTab === "contributions" && <ContributionsAnalysis filters={filters} />}
-        </div>
+          <ActivityFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            repositories={repositories}
+          />
+
+          <TabsContent value="timeline">
+            <EnhancedActivityTimeline filters={filters} pageSize={10} />
+          </TabsContent>
+          <TabsContent value="repositories">
+            <RepositoryActivity filters={filters} />
+          </TabsContent>
+          <TabsContent value="contributions">
+            <ContributionsAnalysis filters={filters} />
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );

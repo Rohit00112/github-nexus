@@ -2,18 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { useGitHub } from "../../../../context/GitHubContext";
 import MainLayout from "../../../../components/layout/MainLayout";
+import PageHeader from "../../../../components/layout/PageHeader";
 import WorkflowList from "../../../../components/actions/WorkflowList";
 import {
+  buttonStyles,
   Card,
-  CardBody,
-  Button,
+  EmptyState,
+  ErrorState,
   Spinner,
   Tabs,
-  Tab
-} from "@nextui-org/react";
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../../../../components/ui";
 
 export default function ActionsPage() {
   const params = useParams();
@@ -23,36 +26,32 @@ export default function ActionsPage() {
   const { githubService } = useGitHub();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("workflows");
 
   useEffect(() => {
-    // Just to check if the repository exists
+    // Confirms the repository exists and is visible to the current token.
     async function checkRepository() {
       if (!githubService) return;
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
         await githubService.getRepository(owner, repo);
       } catch (err) {
         console.error("Error fetching repository:", err);
-        setError("Repository not found or you don't have access to it.");
+        setError("Repository not found, or you don't have access to it.");
       } finally {
         setIsLoading(false);
       }
     }
-    
+
     checkRepository();
   }, [githubService, owner, repo]);
 
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="container mx-auto py-6">
-          <div className="flex justify-center items-center h-64">
-            <Spinner size="lg" />
-          </div>
+        <div className="flex h-64 items-center justify-center">
+          <Spinner size={20} label="Loading workflows" />
         </div>
       </MainLayout>
     );
@@ -61,109 +60,75 @@ export default function ActionsPage() {
   if (error) {
     return (
       <MainLayout>
-        <div className="container mx-auto py-6">
-          <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-4 rounded-md">
-            {error}
-          </div>
-          <div className="mt-4">
-            <Link href="/repositories" className="text-blue-600 dark:text-blue-400 hover:underline">
-              ← Back to Repositories
-            </Link>
-          </div>
-        </div>
+        <ErrorState title="Repository unavailable" message={error} />
       </MainLayout>
     );
   }
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-6">
-        <div className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
-            <Link href="/repositories" className="hover:text-blue-600 dark:hover:text-blue-400">
-              Repositories
-            </Link>
-            <span>/</span>
-            <Link href={`/repositories/${owner}/${repo}`} className="hover:text-blue-600 dark:hover:text-blue-400">
-              {owner}/{repo}
-            </Link>
-            <span>/</span>
-            <span className="text-gray-900 dark:text-gray-200">Actions</span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">GitHub Actions</h1>
-            <Button
-              as="a"
+      <Tabs defaultValue="workflows">
+        <PageHeader
+          title="Actions"
+          description={`${owner}/${repo}`}
+          actions={
+            <a
               href={`https://github.com/${owner}/${repo}/actions`}
               target="_blank"
               rel="noopener noreferrer"
-              variant="flat"
+              className={buttonStyles()}
             >
               View on GitHub
-            </Button>
-          </div>
-        </div>
-
-        <Tabs
-          selectedKey={activeTab}
-          onSelectionChange={(key) => setActiveTab(key as string)}
+            </a>
+          }
         >
-          <Tab key="workflows" title="Workflows">
-            <Card>
-              <CardBody>
-                <WorkflowList owner={owner} repo={repo} />
-              </CardBody>
-            </Card>
-          </Tab>
-          <Tab key="secrets" title="Secrets & Variables">
-            <Card>
-              <CardBody>
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">Secrets & Variables</h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Manage repository secrets and variables for your GitHub Actions workflows.
-                  </p>
-                  <div className="flex justify-center py-8">
-                    <Button
-                      as="a"
-                      href={`https://github.com/${owner}/${repo}/settings/secrets/actions`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      color="primary"
-                    >
-                      Manage on GitHub
-                    </Button>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          </Tab>
-          <Tab key="environments" title="Environments">
-            <Card>
-              <CardBody>
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">Environments</h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Manage deployment environments for your GitHub Actions workflows.
-                  </p>
-                  <div className="flex justify-center py-8">
-                    <Button
-                      as="a"
-                      href={`https://github.com/${owner}/${repo}/settings/environments`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      color="primary"
-                    >
-                      Manage on GitHub
-                    </Button>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          </Tab>
-        </Tabs>
-      </div>
+          <TabsList>
+            <TabsTrigger value="workflows">Workflows</TabsTrigger>
+            <TabsTrigger value="secrets">Secrets &amp; variables</TabsTrigger>
+            <TabsTrigger value="environments">Environments</TabsTrigger>
+          </TabsList>
+        </PageHeader>
+
+        <TabsContent value="workflows">
+          <Card className="p-4">
+            <WorkflowList owner={owner} repo={repo} />
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="secrets">
+          <EmptyState
+            title="Secrets & variables"
+            description="Repository secrets and variables are managed on GitHub."
+            action={
+              <a
+                href={`https://github.com/${owner}/${repo}/settings/secrets/actions`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonStyles({ variant: "primary" })}
+              >
+                Manage on GitHub
+              </a>
+            }
+          />
+        </TabsContent>
+
+        <TabsContent value="environments">
+          <EmptyState
+            title="Environments"
+            description="Deployment environments for these workflows are managed on GitHub."
+            action={
+              <a
+                href={`https://github.com/${owner}/${repo}/settings/environments`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonStyles({ variant: "primary" })}
+              >
+                Manage on GitHub
+              </a>
+            }
+          />
+        </TabsContent>
+      </Tabs>
     </MainLayout>
   );
 }

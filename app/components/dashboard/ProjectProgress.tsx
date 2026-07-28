@@ -92,7 +92,7 @@ const ProjectProgress: FC<ProjectProgressProps> = ({ limit = 3, animationDelay =
     return (
       <div className="bg-destructive/10 text-destructive p-4 rounded-lg flex items-center justify-between text-sm">
         <div>{error}</div>
-        <button onClick={() => { setIsLoading(true); setError(null); setTimeout(fetchProjects, 500); }} className="px-3 py-1 bg-muted hover:bg-accent text-muted-foreground rounded-lg text-sm transition-colors">
+        <button onClick={() => { setIsLoading(true); setError(null); setTimeout(fetchProjects, 500); }} className="px-3 py-1 bg-muted hover:bg-surface-hover text-muted-foreground rounded-lg text-sm transition-colors">
           Retry
         </button>
       </div>

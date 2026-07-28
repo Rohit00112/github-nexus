@@ -2,19 +2,34 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { useGitHub } from "../../../../../../context/GitHubContext";
 import type { GitHubWorkflow } from "../../../../../../services/github/githubService";
 import MainLayout from "../../../../../../components/layout/MainLayout";
+import PageHeader from "../../../../../../components/layout/PageHeader";
 import WorkflowRuns from "../../../../../../components/actions/WorkflowRuns";
 import {
-  Card,
-  CardBody,
+  Badge,
   Button,
+  buttonStyles,
+  Card,
+  ErrorState,
   Spinner,
-  Chip
-} from "@nextui-org/react";
+  useToast,
+} from "../../../../../../components/ui";
 import { PlayIcon } from "@heroicons/react/24/outline";
+
+/** Renders the workflow file name from its repo-relative path. */
+function fileName(path: string) {
+  return path.split("/").pop() || path;
+}
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default function WorkflowDetailPage() {
   const params = useParams();
@@ -23,22 +38,23 @@ export default function WorkflowDetailPage() {
   const workflowId = params.id as string;
 
   const { githubService } = useGitHub();
+  const { toast } = useToast();
   const [workflow, setWorkflow] = useState<GitHubWorkflow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTriggering, setIsTriggering] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchWorkflow() {
       if (!githubService) return;
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
-        // Fetch all workflows and find the one with matching ID
+
         const workflows = await githubService.getRepositoryWorkflows(owner, repo);
         const matchingWorkflow = workflows.find((wf) => wf.id === workflowId);
-        
+
         if (matchingWorkflow) {
           setWorkflow(matchingWorkflow);
         } else {
@@ -51,56 +67,40 @@ export default function WorkflowDetailPage() {
         setIsLoading(false);
       }
     }
-    
+
     fetchWorkflow();
   }, [githubService, owner, repo, workflowId]);
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  // Get file name from path
-  const getFileName = (path: string) => {
-    return path.split("/").pop() || path;
-  };
-
-  // Handle trigger workflow
   const handleTriggerWorkflow = async () => {
     if (!githubService || !workflow) return;
-    
+
     try {
-      setIsLoading(true);
-      
-      // Get the default branch
+      setIsTriggering(true);
+      // A dispatch needs an explicit ref, so fall back to the default branch.
       const repoData = await githubService.getRepository(owner, repo);
-      const defaultBranch = repoData.default_branch;
-      
-      // Trigger the workflow
-      await githubService.triggerWorkflow(owner, repo, workflow.id, defaultBranch);
-      
-      // Show success message
-      alert("Workflow triggered successfully!");
+      await githubService.triggerWorkflow(owner, repo, workflow.id, repoData.default_branch);
+      toast({
+        title: "Workflow triggered",
+        description: `${workflow.name} started on ${repoData.default_branch}.`,
+        variant: "success",
+      });
     } catch (err) {
       console.error("Error triggering workflow:", err);
-      alert("Failed to trigger workflow. Please try again.");
+      toast({
+        title: "Could not trigger workflow",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "error",
+      });
     } finally {
-      setIsLoading(false);
+      setIsTriggering(false);
     }
   };
 
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="container mx-auto py-6">
-          <div className="flex justify-center items-center h-64">
-            <Spinner size="lg" />
-          </div>
+        <div className="flex h-64 items-center justify-center">
+          <Spinner size={20} label="Loading workflow" />
         </div>
       </MainLayout>
     );
@@ -109,102 +109,63 @@ export default function WorkflowDetailPage() {
   if (error || !workflow) {
     return (
       <MainLayout>
-        <div className="container mx-auto py-6">
-          <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-4 rounded-md">
-            {error || "Workflow not found."}
-          </div>
-          <div className="mt-4">
-            <Link href={`/repositories/${owner}/${repo}/actions`} className="text-blue-600 dark:text-blue-400 hover:underline">
-              ← Back to Actions
-            </Link>
-          </div>
-        </div>
+        <ErrorState title="Workflow unavailable" message={error ?? "Workflow not found."} />
       </MainLayout>
     );
   }
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-6">
-        <div className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
-            <Link href="/repositories" className="hover:text-blue-600 dark:hover:text-blue-400">
-              Repositories
-            </Link>
-            <span>/</span>
-            <Link href={`/repositories/${owner}/${repo}`} className="hover:text-blue-600 dark:hover:text-blue-400">
-              {owner}/{repo}
-            </Link>
-            <span>/</span>
-            <Link href={`/repositories/${owner}/${repo}/actions`} className="hover:text-blue-600 dark:hover:text-blue-400">
-              Actions
-            </Link>
-            <span>/</span>
-            <span className="text-gray-900 dark:text-gray-200">{workflow.name}</span>
-          </div>
+      <PageHeader
+        title={workflow.name}
+        description={
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Badge variant={workflow.state === "active" ? "success" : "warning"} size="sm" dot>
+              {workflow.state}
+            </Badge>
+            <span className="font-mono text-xs">{fileName(workflow.path)}</span>
+            <span>Updated {formatDate(workflow.updatedAt)}</span>
+          </span>
+        }
+        actions={
+          <>
+            <a
+              href={workflow.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonStyles()}
+            >
+              View on GitHub
+            </a>
+            <a
+              href={`https://github.com/${owner}/${repo}/edit/${workflow.path}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonStyles()}
+            >
+              Edit workflow
+            </a>
+            <Button
+              variant="primary"
+              startIcon={<PlayIcon className="size-4" />}
+              onClick={handleTriggerWorkflow}
+              loading={isTriggering}
+              disabled={workflow.state !== "active"}
+            >
+              Run workflow
+            </Button>
+          </>
+        }
+      />
 
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold">{workflow.name}</h1>
-              <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                <div className="flex items-center space-x-4">
-                  <Chip
-                    color={workflow.state === "active" ? "success" : "warning"}
-                    size="sm"
-                  >
-                    {workflow.state}
-                  </Chip>
-                  <div>
-                    <span className="font-medium">File:</span> {getFileName(workflow.path)}
-                  </div>
-                  <div>
-                    <span className="font-medium">Updated:</span> {formatDate(workflow.updatedAt)}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                color="primary"
-                startContent={<PlayIcon className="h-4 w-4" />}
-                onPress={handleTriggerWorkflow}
-                isDisabled={workflow.state !== "active"}
-              >
-                Run workflow
-              </Button>
-              <Button
-                as="a"
-                href={workflow.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="flat"
-              >
-                View on GitHub
-              </Button>
-              <Button
-                as="a"
-                href={`https://github.com/${owner}/${repo}/edit/${workflow.path}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="flat"
-              >
-                Edit workflow
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <Card>
-          <CardBody>
-            <WorkflowRuns
-              owner={owner}
-              repo={repo}
-              workflowId={workflow.id}
-              workflowName={workflow.name}
-            />
-          </CardBody>
-        </Card>
-      </div>
+      <Card className="p-4">
+        <WorkflowRuns
+          owner={owner}
+          repo={repo}
+          workflowId={workflow.id}
+          workflowName={workflow.name}
+        />
+      </Card>
     </MainLayout>
   );
 }

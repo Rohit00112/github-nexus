@@ -72,13 +72,13 @@ function AutomationPageContent() {
           <div className="flex gap-2">
             <button
               onClick={() => { setShowGuide(!showGuide); setShowTemplates(false); }}
-              className="border border-border bg-card hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="border border-border bg-card hover:bg-surface-hover px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               {showGuide ? "Hide Guide" : "Guide"}
             </button>
             <button
               onClick={() => { setShowTemplates(!showTemplates); setShowGuide(false); }}
-              className="border border-border bg-card hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="border border-border bg-card hover:bg-surface-hover px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               {showTemplates ? "Hide Templates" : "Templates"}
             </button>

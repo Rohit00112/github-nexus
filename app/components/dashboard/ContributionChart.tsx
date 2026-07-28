@@ -189,7 +189,7 @@ const ContributionChart: FC<ContributionChartProps> = ({
           <div className="text-sm">{error}</div>
           <button
             onClick={() => fetchContributions()}
-            className="px-3 py-1 bg-muted hover:bg-accent text-muted-foreground rounded-lg text-sm transition-colors"
+            className="px-3 py-1 bg-muted hover:bg-surface-hover text-muted-foreground rounded-lg text-sm transition-colors"
           >
             Retry
           </button>
@@ -208,7 +208,7 @@ const ContributionChart: FC<ContributionChartProps> = ({
           <p className="text-sm mb-3">No contribution data available</p>
           <button
             onClick={() => fetchContributions()}
-            className="px-4 py-2 bg-muted hover:bg-accent text-muted-foreground rounded-lg text-sm transition-colors"
+            className="px-4 py-2 bg-muted hover:bg-surface-hover text-muted-foreground rounded-lg text-sm transition-colors"
           >
             Refresh Data
           </button>

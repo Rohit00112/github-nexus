@@ -120,7 +120,7 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleRefresh}
-              className="px-3 py-2 border border-border bg-card hover:bg-accent rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+              className="px-3 py-2 border border-border bg-card hover:bg-surface-hover rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
               disabled={isLoading}
             >
               {isLoading ? <LoadingSpinner size="small" /> : (

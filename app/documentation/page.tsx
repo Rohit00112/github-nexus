@@ -2,17 +2,17 @@
 
 import ContentSection, { CodeBlock } from "../components/documentation/ContentSection";
 import MainLayout from "../components/layout/MainLayout";
+import PageHeader from "../components/layout/PageHeader";
+import { Card } from "../components/ui";
 
 export default function DocumentationPage() {
   return (
     <MainLayout>
-      <div className="py-2">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight">Documentation</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Learn how to use GitHub Nexus to manage your GitHub workflow efficiently.
-          </p>
-        </div>
+      <div className="max-w-3xl">
+        <PageHeader
+          title="Documentation"
+          description="Learn how to use GitHub Nexus to manage your GitHub workflow efficiently."
+        />
 
         <ContentSection title="Introduction">
           <p>
@@ -132,21 +132,23 @@ async function createIssue(owner: string, repo: string, title: string, body: str
           </CodeBlock>
         </ContentSection>
 
-        <div className="mt-12 p-6 bg-primary/5 border border-border rounded-xl">
-          <h2 className="text-base font-bold mb-2">Need Help?</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            If you have any questions or need assistance, please reach out to our support team or check out
-            the GitHub repository for more information.
+        <Card className="mt-10 p-5">
+          <h2 className="text-sm font-semibold text-text">Need help?</h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Reach out to support or check the GitHub repository for more information.
           </p>
-          <div className="flex gap-4">
-            <a href="https://github.com/Rohit00112/github-nexus" className="text-sm text-primary hover:underline">
-              GitHub Repository
+          <div className="mt-3 flex gap-4">
+            <a
+              href="https://github.com/Rohit00112/github-nexus"
+              className="text-xs font-medium text-accent hover:underline"
+            >
+              GitHub repository
             </a>
-            <a href="/contact" className="text-sm text-primary hover:underline">
-              Contact Support
+            <a href="/contact" className="text-xs font-medium text-accent hover:underline">
+              Contact support
             </a>
           </div>
-        </div>
+        </Card>
       </div>
     </MainLayout>
   );

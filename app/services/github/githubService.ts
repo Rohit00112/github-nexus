@@ -1755,4 +1755,58 @@ export class GitHubService {
     });
     return repository.id;
   }
+
+  /**
+   * Cross-repository issue and pull request search. Unlike `searchIssues`,
+   * which filters one repository client-side, this hits the search API so the
+   * command palette can look across everything the user can see.
+   */
+  async searchIssuesGlobal(options: {
+    query: string;
+    type?: 'issue' | 'pr';
+    per_page?: number;
+    page?: number;
+  }) {
+    const qualifiers = [options.query];
+    if (options.type) qualifiers.push(`type:${options.type}`);
+
+    const { data } = await this.octokit.rest.search.issuesAndPullRequests({
+      q: qualifiers.join(' '),
+      per_page: options.per_page || 10,
+      page: options.page || 1,
+      advanced_search: 'true',
+    });
+    return data;
+  }
+
+  /**
+   * Issues and pull requests across all repositories, scoped by a role
+   * qualifier. Replaces the old pattern of looping over repositories and
+   * fetching each one's issues separately.
+   */
+  async searchIssuesForUser(options: {
+    login: string;
+    role: 'author' | 'assignee' | 'mentions' | 'review-requested';
+    type: 'issue' | 'pr';
+    state?: 'open' | 'closed' | 'all';
+    query?: string;
+    sort?: 'created' | 'updated' | 'comments';
+    order?: 'asc' | 'desc';
+    per_page?: number;
+    page?: number;
+  }) {
+    const qualifiers = [`type:${options.type}`, `${options.role}:${options.login}`];
+    if (options.state && options.state !== 'all') qualifiers.push(`state:${options.state}`);
+    if (options.query) qualifiers.push(options.query);
+
+    const { data } = await this.octokit.rest.search.issuesAndPullRequests({
+      q: qualifiers.join(' '),
+      sort: options.sort,
+      order: options.order || 'desc',
+      per_page: options.per_page || 25,
+      page: options.page || 1,
+      advanced_search: 'true',
+    });
+    return data;
+  }
 }

@@ -61,8 +61,8 @@ export default function SettingsPage() {
                         onClick={() => setActiveTab(tab.key)}
                         className={`w-full text-left px-3 py-2 rounded-lg flex items-center space-x-2.5 text-sm transition-colors ${
                           activeTab === tab.key
-                            ? "bg-accent text-foreground font-medium"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                            ? "bg-surface-hover text-foreground font-medium"
+                            : "text-muted-foreground hover:text-foreground hover:bg-surface-hover/50"
                         }`}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

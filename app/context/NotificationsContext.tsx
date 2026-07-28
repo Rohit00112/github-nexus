@@ -1,20 +1,26 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
+import { createContext, useCallback, useContext, ReactNode, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useGitHub } from "./GitHubContext";
 import { useAuth } from "../hooks/useAuth";
 import { GitHubNotification } from "../types/github";
+import { qk } from "../hooks/queries/keys";
+
+export interface NotificationFilters {
+  /** Include notifications already marked as read. */
+  all?: boolean;
+  /** Restrict to threads the user is directly participating in. */
+  participating?: boolean;
+}
 
 interface NotificationsContextType {
   notifications: GitHubNotification[];
   unreadCount: number;
   isLoading: boolean;
   error: string | null;
-  fetchNotifications: (options?: {
-    all?: boolean;
-    participating?: boolean;
-    since?: string;
-  }) => Promise<void>;
+  /** Refetches the list, optionally switching the active filters. */
+  fetchNotifications: (options?: NotificationFilters) => Promise<void>;
   markAsRead: (threadId: number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   markRepositoryNotificationsAsRead: (owner: string, repo: string) => Promise<void>;
@@ -35,177 +41,136 @@ export function useNotifications() {
   return useContext(NotificationsContext);
 }
 
-interface NotificationsProviderProps {
-  children: ReactNode;
-}
-
-export function NotificationsProvider({ children }: NotificationsProviderProps) {
+/**
+ * Notification state for both the bell and the notifications page. Backed by a
+ * single TanStack query so the two never fetch twice or disagree.
+ *
+ * The previous implementation passed `since: lastFetchTime` on every poll,
+ * which replaced the whole list with only recently-changed threads. Polling
+ * now always requests the full window.
+ */
+export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { githubService } = useGitHub();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [notifications, setNotifications] = useState<GitHubNotification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
-  const [initialFetchDone, setInitialFetchDone] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+  const [filters, setFilters] = useState<NotificationFilters>({});
 
-  // Fetch notifications
-  const fetchNotifications = useCallback(async (options?: {
-    all?: boolean;
-    participating?: boolean;
-    since?: string;
-  }) => {
-    if (!githubService || !isAuthenticated) {
-      // If not authenticated or no service, set empty notifications and stop loading
-      setNotifications([]);
-      setUnreadCount(0);
-      setIsLoading(false);
-      return;
-    }
+  const all = filters.all ?? false;
+  const participating = filters.participating ?? false;
+  const queryKey = qk.notifications.list(all, participating);
 
-    try {
-      setIsLoading(true);
-      setError(null);
+  const {
+    data: notifications = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey,
+    enabled: !!githubService && isAuthenticated,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const data = await githubService!.getNotifications({ all, participating, per_page: 50 });
+      // The REST payload exposes the thread id as a string `id`; the rest of
+      // the app works with a numeric `thread_id`.
+      return data.map((notification) => ({
+        ...notification,
+        thread_id: Number(notification.id),
+      })) as GitHubNotification[];
+    },
+  });
 
-      // Add since parameter if lastFetchTime exists and since is not provided
-      const fetchOptions = { ...options };
-      if (lastFetchTime && !fetchOptions.since) {
-        fetchOptions.since = lastFetchTime.toISOString();
-      }
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => notification.unread).length,
+    [notifications]
+  );
 
-      // Add a timeout to prevent infinite loading
-      const timeoutPromise = new Promise<GitHubNotification[]>((_, reject) => {
-        setTimeout(() => reject(new Error("Request timeout")), 10000);
-      });
-
-      // Race between the actual request and the timeout
-      const data = await Promise.race([
-        githubService.getNotifications({
-          ...fetchOptions,
-          per_page: 50,
-        }),
-        timeoutPromise
-      ]);
-
-      // If we get here, the request succeeded
-      setNotifications(data as GitHubNotification[]);
-      setUnreadCount(data.filter(notification => notification.unread).length);
-      setLastFetchTime(new Date());
-    } catch (err) {
-      console.error("Error fetching notifications:", err);
-      setError("Failed to fetch notifications. Please try again later.");
-
-      // Set empty notifications array to prevent UI from being stuck
-      setNotifications([]);
-      setUnreadCount(0);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [githubService, isAuthenticated, lastFetchTime]);
-
-  // Mark a notification as read
-  const markAsRead = useCallback(async (threadId: number) => {
-    if (!githubService || !isAuthenticated) return;
-
-    try {
-      await githubService.markNotificationAsRead(threadId);
-
-      // Update local state
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification.thread_id === threadId
-            ? { ...notification, unread: false }
-            : notification
+  /** Patches the cached list, returning a rollback snapshot. */
+  const patchCache = useCallback(
+    (predicate: (notification: GitHubNotification) => boolean) => {
+      const previous = queryClient.getQueryData<GitHubNotification[]>(queryKey);
+      queryClient.setQueryData<GitHubNotification[]>(queryKey, (current) =>
+        (current ?? []).map((notification) =>
+          predicate(notification) ? { ...notification, unread: false } : notification
         )
       );
-
-      // Update unread count
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (err) {
-      console.error("Error marking notification as read:", err);
-      setError("Failed to mark notification as read. Please try again later.");
-    }
-  }, [githubService, isAuthenticated]);
-
-  // Mark all notifications as read
-  const markAllAsRead = useCallback(async () => {
-    if (!githubService || !isAuthenticated) return;
-
-    try {
-      await githubService.markAllNotificationsAsRead();
-
-      // Update local state
-      setNotifications(prev =>
-        prev.map(notification => ({ ...notification, unread: false }))
-      );
-
-      // Update unread count
-      setUnreadCount(0);
-    } catch (err) {
-      console.error("Error marking all notifications as read:", err);
-      setError("Failed to mark all notifications as read. Please try again later.");
-    }
-  }, [githubService, isAuthenticated]);
-
-  // Mark repository notifications as read
-  const markRepositoryNotificationsAsRead = useCallback(async (owner: string, repo: string) => {
-    if (!githubService || !isAuthenticated) return;
-
-    try {
-      await githubService.markRepositoryNotificationsAsRead(owner, repo);
-
-      // Update local state
-      const repoFullName = `${owner}/${repo}`;
-      const updatedNotifications = notifications.map(notification =>
-        notification.repository.full_name === repoFullName
-          ? { ...notification, unread: false }
-          : notification
-      );
-
-      setNotifications(updatedNotifications);
-
-      // Update unread count
-      setUnreadCount(updatedNotifications.filter(n => n.unread).length);
-    } catch (err) {
-      console.error("Error marking repository notifications as read:", err);
-      setError("Failed to mark repository notifications as read. Please try again later.");
-    }
-  }, [githubService, isAuthenticated, notifications]);
-
-  // Initial fetch
-  useEffect(() => {
-    // Only fetch if authenticated, service is available, and auth loading is complete
-    if (isAuthenticated && githubService && !authLoading && !initialFetchDone) {
-      fetchNotifications();
-      setInitialFetchDone(true);
-    }
-  }, [isAuthenticated, githubService, fetchNotifications, authLoading, initialFetchDone]);
-
-  // Periodic fetch (every 5 minutes)
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const intervalId = setInterval(() => {
-      fetchNotifications();
-    }, 5 * 60 * 1000);
-
-    return () => clearInterval(intervalId);
-  }, [isAuthenticated, fetchNotifications]);
-
-  return (
-    <NotificationsContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        isLoading,
-        error,
-        fetchNotifications,
-        markAsRead,
-        markAllAsRead,
-        markRepositoryNotificationsAsRead,
-      }}
-    >
-      {children}
-    </NotificationsContext.Provider>
+      return previous;
+    },
+    [queryClient, queryKey]
   );
+
+  const markAsReadMutation = useMutation({
+    mutationFn: (threadId: number) => githubService!.markNotificationAsRead(threadId),
+    onMutate: (threadId) => ({ previous: patchCache((n) => n.thread_id === threadId) }),
+    onError: (_error, _threadId, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: qk.notifications.all }),
+  });
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => githubService!.markAllNotificationsAsRead(),
+    onMutate: () => ({ previous: patchCache(() => true) }),
+    onError: (_error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: qk.notifications.all }),
+  });
+
+  const markRepoAsReadMutation = useMutation({
+    mutationFn: ({ owner, repo }: { owner: string; repo: string }) =>
+      githubService!.markRepositoryNotificationsAsRead(owner, repo),
+    onMutate: ({ owner, repo }) => ({
+      previous: patchCache((n) => n.repository.full_name === `${owner}/${repo}`),
+    }),
+    onError: (_error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: qk.notifications.all }),
+  });
+
+  const fetchNotifications = useCallback(
+    async (options?: NotificationFilters) => {
+      // Switching filters changes the query key, which fetches on its own.
+      if (
+        options &&
+        ((options.all ?? false) !== all || (options.participating ?? false) !== participating)
+      ) {
+        setFilters({ all: options.all ?? false, participating: options.participating ?? false });
+        return;
+      }
+      await refetch();
+    },
+    [refetch, all, participating]
+  );
+
+  const value = useMemo<NotificationsContextType>(
+    () => ({
+      notifications,
+      unreadCount,
+      isLoading,
+      error: error ? "Failed to fetch notifications. Please try again later." : null,
+      fetchNotifications,
+      markAsRead: async (threadId) => {
+        await markAsReadMutation.mutateAsync(threadId);
+      },
+      markAllAsRead: async () => {
+        await markAllAsReadMutation.mutateAsync();
+      },
+      markRepositoryNotificationsAsRead: async (owner, repo) => {
+        await markRepoAsReadMutation.mutateAsync({ owner, repo });
+      },
+    }),
+    [
+      notifications,
+      unreadCount,
+      isLoading,
+      error,
+      fetchNotifications,
+      markAsReadMutation,
+      markAllAsReadMutation,
+      markRepoAsReadMutation,
+    ]
+  );
+
+  return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;
 }
