@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useGitHub } from "../../context/GitHubContext";
+import Image from "next/image";
 import { REPOSITORY_DETAILS_QUERY, REPOSITORY_CONTRIBUTORS_QUERY } from "../../services/github/queries/repositoryQueries";
 import LoadingSpinner from "../ui/LoadingSpinner";
 
@@ -276,10 +277,13 @@ export default function GraphQLRepositoryInsights({ owner, repo }: GraphQLReposi
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {contributorsData.repository.collaborators.edges.map((edge, index) => (
                 <div key={index} className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg flex items-center">
-                  <img
+                  <Image
                     src={edge.node.avatarUrl}
                     alt={edge.node.login}
                     className="w-10 h-10 rounded-full mr-3"
+                    unoptimized
+                    width={40}
+                    height={40}
                   />
                   <div>
                     <div className="font-medium">{edge.node.name || edge.node.login}</div>

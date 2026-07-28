@@ -9,13 +9,11 @@ import WorkflowList from "../../../../components/actions/WorkflowList";
 import {
   Card,
   CardBody,
-  CardHeader,
   Button,
   Spinner,
   Tabs,
   Tab
 } from "@nextui-org/react";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 export default function ActionsPage() {
   const params = useParams();

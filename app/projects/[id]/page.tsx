@@ -6,6 +6,11 @@ import Link from "next/link";
 import { useGitHub } from "../../context/GitHubContext";
 import MainLayout from "../../components/layout/MainLayout";
 import ProjectBoard from "../../components/projects/ProjectBoard";
+import type {
+  ClassicProject,
+  ClassicProjectCard,
+  ClassicProjectColumn,
+} from "../../services/github/githubService";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -13,12 +18,12 @@ export default function ProjectDetailPage() {
   const projectId = parseInt(params.id as string, 10);
 
   const { githubService } = useGitHub();
-  const [project, setProject] = useState<any | null>(null);
-  const [columns, setColumns] = useState<any[]>([]);
-  const [cards, setCards] = useState<Record<number, any[]>>({});
+  const [project, setProject] = useState<ClassicProject | null>(null);
+  const [columns, setColumns] = useState<ClassicProjectColumn[]>([]);
+  const [cards, setCards] = useState<Record<number, ClassicProjectCard[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateColumnModal, setShowCreateColumnModal] = useState(false);
+  const [_showCreateColumnModal, _setShowCreateColumnModal] = useState(false);
   const [isDraggingEnabled, setIsDraggingEnabled] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -45,7 +50,7 @@ export default function ProjectDetailPage() {
         setColumns(columnsData);
 
         // Fetch cards for each column
-        const cardsData: Record<number, any[]> = {};
+        const cardsData: Record<number, ClassicProjectCard[]> = {};
 
         for (const column of columnsData) {
           const columnCards = await githubService.getColumnCards(column.id);
@@ -116,7 +121,7 @@ export default function ProjectDetailPage() {
   };
 
   // Handle column creation
-  const handleColumnCreated = async (column: any) => {
+  const handleColumnCreated = async (column: ClassicProjectColumn) => {
     setColumns([...columns, column]);
     setCards({ ...cards, [column.id]: [] });
   };
@@ -138,7 +143,7 @@ export default function ProjectDetailPage() {
   };
 
   // Handle card creation
-  const handleAddCard = async (columnId: number) => {
+  const _handleAddCard = async (columnId: number) => {
     if (!githubService) return;
 
     try {
@@ -151,7 +156,7 @@ export default function ProjectDetailPage() {
   };
 
   // Handle card deletion
-  const handleDeleteCard = async (cardId: number) => {
+  const _handleDeleteCard = async (cardId: number) => {
     // Update cards state by removing the deleted card
     const newCards = { ...cards };
 
@@ -163,12 +168,12 @@ export default function ProjectDetailPage() {
   };
 
   // Handle card movement
-  const handleMoveCard = async (cardId: number, columnId: number, position: string) => {
+  const _handleMoveCard = async (_cardId: number, _columnId: number, _position: string) => {
     if (!githubService) return;
 
     try {
       // Refresh cards for all columns after movement
-      const updatedCards: Record<number, any[]> = {};
+      const updatedCards: Record<number, ClassicProjectCard[]> = {};
 
       for (const column of columns) {
         const columnCards = await githubService.getColumnCards(column.id);

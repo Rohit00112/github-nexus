@@ -9,11 +9,8 @@ import DiscussionDetail from "../../../../../components/discussions/DiscussionDe
 import {
   Card,
   CardBody,
-  CardHeader,
-  Button,
   Spinner
 } from "@nextui-org/react";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 export default function DiscussionDetailPage() {
   const params = useParams();

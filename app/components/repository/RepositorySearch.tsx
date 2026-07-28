@@ -6,10 +6,14 @@ import { useGitHub } from '../../context/GitHubContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import RepositoryCard from './RepositoryCard';
 import SearchHistory, { addToSearchHistory } from './SearchHistory';
+import type { GitHubService } from '../../services/github/githubService';
 
 interface RepositorySearchProps {
   initialQuery?: string;
 }
+
+type Repository = Awaited<ReturnType<GitHubService["searchRepositories"]>>["items"][number];
+type Sort = 'stars' | 'forks' | 'updated' | 'help-wanted-issues';
 
 const RepositorySearch: FC<RepositorySearchProps> = ({ initialQuery = '' }) => {
   const router = useRouter();
@@ -18,17 +22,17 @@ const RepositorySearch: FC<RepositorySearchProps> = ({ initialQuery = '' }) => {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState(initialQuery || searchParams.get('q') || '');
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Repository[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage] = useState(10);
 
   // Filter and sort state
-  const [sortBy, setSortBy] = useState<'stars' | 'forks' | 'updated' | 'help-wanted-issues'>('stars');
+  const [sortBy, setSortBy] = useState<Sort>('stars');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [language, setLanguage] = useState<string>('');
   const [minStars, setMinStars] = useState<string>('');
@@ -275,7 +279,7 @@ const RepositorySearch: FC<RepositorySearchProps> = ({ initialQuery = '' }) => {
             <div className="flex">
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as Sort)}
                 className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-l-md bg-white dark:bg-gray-800"
               >
                 <option value="stars">Stars</option>

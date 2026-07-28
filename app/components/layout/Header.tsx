@@ -2,10 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { FC, useState, useRef, useEffect } from 'react';
+import { FC } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import NotificationBell from '../notifications/NotificationBell';
-import HeaderSearchBar from '../ui/HeaderSearchBar';
 import AuthMethodBadge from '../ui/AuthMethodBadge';
 import {
   Navbar,
@@ -20,100 +19,88 @@ import {
   Button
 } from "@nextui-org/react";
 import ThemeToggle from '../ui/ThemeToggle';
+import HeaderSearchBar from '../ui/HeaderSearchBar';
 
-const Header: FC = () => {
-  const { session, isAuthenticated, isLoading, signIn, signOut } = useAuth();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+interface HeaderProps {
+  onToggleSidebar?: () => void;
+}
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+const Header: FC<HeaderProps> = ({ onToggleSidebar }) => {
+  const { session, isAuthenticated } = useAuth();
 
   return (
     <Navbar
       maxWidth="xl"
-      className="bg-background/70 dark:bg-background/70 backdrop-blur-md border-b border-divider"
+      className="fixed top-0 z-50 h-14 bg-background/80 backdrop-blur-xl border-b border-border"
       classNames={{
-        wrapper: "px-4 sm:px-6",
+        wrapper: "px-4 h-14",
       }}
     >
-      <NavbarBrand>
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 relative">
+      <NavbarBrand className="gap-2">
+        {isAuthenticated && (
+          <button
+            onClick={onToggleSidebar}
+            className="md:hidden p-1.5 rounded-lg hover:bg-accent text-muted-foreground"
+            aria-label="Toggle sidebar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          </button>
+        )}
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-7 h-7 relative">
             <Image
               src="/logo.svg"
-              alt="GitHub Nexus Logo"
+              alt="GitHub Nexus"
               fill
               className="object-contain"
               priority
             />
           </div>
-          <span className="text-xl font-bold">GitHub Nexus</span>
+          <span className="text-sm font-semibold tracking-tight hidden sm:inline">GitHub Nexus</span>
         </Link>
       </NavbarBrand>
 
-      {isAuthenticated && (
-        <NavbarContent className="hidden md:flex gap-4" justify="center">
-          <NavbarItem>
-            <Link href="/repositories" className="text-foreground/80 hover:text-foreground transition-colors">
-              Repositories
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href="/issues" className="text-foreground/80 hover:text-foreground transition-colors">
-              Issues
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href="/pull-requests" className="text-foreground/80 hover:text-foreground transition-colors">
-              Pull Requests
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href="/gists" className="text-foreground/80 hover:text-foreground transition-colors">
-              Gists
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href="/code-review" className="text-foreground/80 hover:text-foreground transition-colors">
-              Code Review
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href="/projects" className="text-foreground/80 hover:text-foreground transition-colors">
-              Projects
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href="/actions" className="text-foreground/80 hover:text-foreground transition-colors">
-              Actions
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href="/insights" className="text-foreground/80 hover:text-foreground transition-colors">
-              Insights
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href="/team" className="text-foreground/80 hover:text-foreground transition-colors">
-              Team
-            </Link>
-          </NavbarItem>
-        </NavbarContent>
-      )}
+      <NavbarContent className="hidden md:flex gap-1" justify="center">
+        {isAuthenticated && (
+          <>
+            <NavbarItem>
+              <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg hover:bg-accent transition-colors">
+                Dashboard
+              </Link>
+            </NavbarItem>
+            <NavbarItem>
+              <Link href="/repositories" className="text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg hover:bg-accent transition-colors">
+                Repositories
+              </Link>
+            </NavbarItem>
+            <NavbarItem>
+              <Link href="/issues" className="text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg hover:bg-accent transition-colors">
+                Issues
+              </Link>
+            </NavbarItem>
+            <NavbarItem>
+              <Link href="/pull-requests" className="text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg hover:bg-accent transition-colors">
+                Pull Requests
+              </Link>
+            </NavbarItem>
+            <NavbarItem>
+              <Link href="/projects" className="text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg hover:bg-accent transition-colors">
+                Projects
+              </Link>
+            </NavbarItem>
+          </>
+        )}
+      </NavbarContent>
 
-      <NavbarContent justify="end">
+      <NavbarContent justify="end" className="gap-1">
+        {isAuthenticated && (
+          <NavbarItem className="hidden md:flex">
+            <HeaderSearchBar />
+          </NavbarItem>
+        )}
+
         <NavbarItem>
           <ThemeToggle />
         </NavbarItem>
@@ -130,25 +117,25 @@ const Header: FC = () => {
               <DropdownTrigger>
                 <Avatar
                   as="button"
-                  className="transition-transform"
+                  className="transition-transform hover:ring-2 hover:ring-border"
                   src={session?.user?.image || undefined}
                   name={session?.user?.name?.charAt(0) || "U"}
                   size="sm"
                 />
               </DropdownTrigger>
-              <DropdownMenu aria-label="User menu" variant="flat">
-                <DropdownItem key="profile" textValue="Profile" className="h-14 gap-2">
-                  <p className="font-semibold">{session?.user?.name}</p>
-                  <p className="text-xs text-default-500">{session?.user?.email}</p>
+              <DropdownMenu aria-label="User menu" variant="flat" className="w-56">
+                <DropdownItem key="profile" textValue="Profile" className="h-auto gap-2 py-3">
+                  <p className="font-medium text-sm">{session?.user?.name}</p>
+                  <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
                 </DropdownItem>
                 <DropdownItem key="profile-page">
-                  <Link href="/profile" className="w-full">Your Profile</Link>
+                  <Link href="/profile" className="w-full text-sm">Your Profile</Link>
                 </DropdownItem>
                 <DropdownItem key="settings">
-                  <Link href="/settings" className="w-full">Settings</Link>
+                  <Link href="/settings" className="w-full text-sm">Settings</Link>
                 </DropdownItem>
                 <DropdownItem key="logout" color="danger">
-                  <Link href="/auth/signout" className="w-full">Sign out</Link>
+                  <Link href="/auth/signout" className="w-full text-sm">Sign out</Link>
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
@@ -160,6 +147,8 @@ const Header: FC = () => {
               href="/auth/signin"
               color="primary"
               variant="flat"
+              size="sm"
+              className="rounded-lg font-medium"
             >
               Sign in
             </Button>

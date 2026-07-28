@@ -1,4 +1,5 @@
 import { gsap } from 'gsap';
+import type { UpdateMode } from 'chart.js';
 
 // Check if the user prefers reduced motion
 const prefersReducedMotion = (): boolean => {
@@ -23,7 +24,7 @@ const getStagger = (stagger: number): number => {
  * @param stagger - Stagger between each element's animation
  */
 export const fadeInUp = (
-  elements: string | gsap.utils.Selector | Element | Element[] | NodeList,
+  elements: string | Element | Element[] | NodeList,
   delay: number = 0,
   stagger: number = 0.1
 ): gsap.core.Timeline => {
@@ -52,7 +53,7 @@ export const fadeInUp = (
  * @param stagger - Stagger between each element's animation
  */
 export const fadeInLeft = (
-  elements: string | gsap.utils.Selector | Element | Element[] | NodeList,
+  elements: string | Element | Element[] | NodeList,
   delay: number = 0,
   stagger: number = 0.1
 ): gsap.core.Timeline => {
@@ -81,7 +82,7 @@ export const fadeInLeft = (
  * @param stagger - Stagger between each element's animation
  */
 export const fadeInRight = (
-  elements: string | gsap.utils.Selector | Element | Element[] | NodeList,
+  elements: string | Element | Element[] | NodeList,
   delay: number = 0,
   stagger: number = 0.1
 ): gsap.core.Timeline => {
@@ -110,7 +111,7 @@ export const fadeInRight = (
  * @param stagger - Stagger between each element's animation
  */
 export const scaleUp = (
-  elements: string | gsap.utils.Selector | Element | Element[] | NodeList,
+  elements: string | Element | Element[] | NodeList,
   delay: number = 0,
   stagger: number = 0.1
 ): gsap.core.Timeline => {
@@ -239,30 +240,44 @@ export const addHoverAnimation = (
  * @param chartInstance - Chart.js instance
  * @param duration - Animation duration
  */
+interface ChartDataset {
+  data: number[];
+}
+
+interface ChartInstance {
+  canvas: HTMLCanvasElement | null;
+  data: { datasets: ChartDataset[] };
+  update: (mode?: UpdateMode) => void;
+}
+
 export const animateChartData = (
-  chartInstance: any,
+  chartInstance: ChartInstance,
   duration: number = 1.5
 ): void => {
-  if (!chartInstance || !chartInstance.data || !chartInstance.data.datasets) return;
+  if (!chartInstance.canvas?.ownerDocument || !chartInstance.data?.datasets) return;
+
+  const update = (mode?: UpdateMode) => {
+    if (chartInstance.canvas?.ownerDocument) chartInstance.update(mode);
+  };
   
   const datasets = chartInstance.data.datasets;
   
-  datasets.forEach((dataset: any, index: number) => {
+  datasets.forEach((dataset: ChartDataset, index: number) => {
     const originalData = [...dataset.data];
     dataset.data = Array(originalData.length).fill(0);
     
-    chartInstance.update('none');
+    update('none');
     
     gsap.to(dataset.data, {
       duration: getDuration(duration),
       ease: 'power2.out',
       delay: index * 0.2,
       onUpdate: function() {
-        chartInstance.update('none');
+        update('none');
       },
       onComplete: function() {
         dataset.data = originalData;
-        chartInstance.update();
+        update();
       }
     });
   });

@@ -48,7 +48,7 @@ export default function CommitActivityChart({ owner, repo }: CommitActivityChart
         setError(null);
         
         const data = await githubService.getCommitActivity(owner, repo);
-        setCommitActivity(data);
+        setCommitActivity(data as WeeklyCommit[]);
       } catch (err) {
         console.error("Error fetching commit activity:", err);
         setError("Failed to load commit activity data. Please try again later.");
@@ -119,10 +119,10 @@ export default function CommitActivityChart({ owner, repo }: CommitActivityChart
       },
       tooltip: {
         callbacks: {
-          title: function(tooltipItems: any) {
+          title: function(tooltipItems: Array<{ label?: string | number }>) {
             return `Week of ${tooltipItems[0].label}`;
           },
-          label: function(context: any) {
+          label: function(context: { parsed: { y: number } }) {
             return `${context.parsed.y} commits`;
           }
         }

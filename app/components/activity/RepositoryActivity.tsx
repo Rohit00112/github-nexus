@@ -2,8 +2,7 @@
 
 import { FC, useState, useEffect } from 'react';
 import { useGitHub } from '../../context/GitHubContext';
-import { Card, CardBody, CardHeader, Spinner, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Chip, Tabs, Tab } from '@nextui-org/react';
-import Image from 'next/image';
+import { Card, CardBody, Spinner, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Chip, Tabs, Tab } from '@nextui-org/react';
 import Link from 'next/link';
 import { ActivityFilters } from './ActivityFilters';
 
@@ -53,14 +52,13 @@ const RepositoryActivity: FC<RepositoryActivityProps> = ({ filters }) => {
           try {
             // Get commit count
             const commitActivity = await githubService.getCommitActivity(repo.owner.login, repo.name);
-            const commitCount = commitActivity.reduce((total: number, week: any) => total + week.total, 0);
+            const commitCount = commitActivity.reduce((total, week) => total + week.total, 0);
             
             // Get pull request count
-            const pullRequests = await githubService.getPullRequests(repo.owner.login, repo.name, 1, 1);
-            const pullRequestCount = repo.open_issues_count; // This is an approximation
+            const pullRequestCount = repo.open_issues_count ?? 0; // This is an approximation
             
             // Get issue count (excluding PRs)
-            const issueCount = repo.open_issues_count - pullRequestCount;
+            const issueCount = (repo.open_issues_count ?? 0) - pullRequestCount;
             
             repoStats.push({
               name: repo.name,
@@ -68,10 +66,10 @@ const RepositoryActivity: FC<RepositoryActivityProps> = ({ filters }) => {
               commits: commitCount,
               pullRequests: pullRequestCount,
               issues: issueCount,
-              stars: repo.stargazers_count,
-              forks: repo.forks_count,
-              lastUpdated: repo.updated_at,
-              url: repo.html_url
+              stars: repo.stargazers_count ?? 0,
+              forks: repo.forks_count ?? 0,
+              lastUpdated: repo.updated_at ?? '',
+              url: repo.html_url ?? ''
             });
           } catch (err) {
             console.error(`Error fetching activity for ${repo.full_name}:`, err);
@@ -102,7 +100,7 @@ const RepositoryActivity: FC<RepositoryActivityProps> = ({ filters }) => {
     // Filter by time range
     if (filters.timeRange) {
       const now = new Date();
-      let startDate = new Date();
+      const startDate = new Date();
       
       switch (filters.timeRange) {
         case 'today':

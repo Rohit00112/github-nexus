@@ -135,7 +135,7 @@ export default function RepositoryInsightsPage() {
           <div>
             <h2 className="text-xl font-semibold mb-4">GraphQL Repository Insights</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              View detailed repository information fetched using GitHub's GraphQL API for improved performance and reduced API calls.
+              View detailed repository information fetched using GitHub&apos;s GraphQL API for improved performance and reduced API calls.
             </p>
             <GraphQLRepositoryInsights owner={ownerName} repo={repoName} />
           </div>

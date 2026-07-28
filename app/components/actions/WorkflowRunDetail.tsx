@@ -5,15 +5,12 @@ import { useGitHub } from "../../context/GitHubContext";
 import {
   Card,
   CardBody,
-  CardHeader,
   Button,
   Spinner,
   Chip,
   Accordion,
   AccordionItem,
-  Divider,
-  Progress,
-  Tooltip
+  Divider
 } from "@nextui-org/react";
 import { 
   ArrowPathIcon, 
@@ -24,8 +21,6 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
-import Link from "next/link";
-
 interface WorkflowRunJob {
   id: string;
   name: string;
@@ -45,6 +40,24 @@ interface WorkflowRunJob {
   };
 }
 
+interface WorkflowRun {
+  id: string;
+  runNumber: number;
+  updatedAt: string;
+  status: string;
+  conclusion: string | null;
+  event: string;
+  headBranch: string;
+  headCommit: {
+    message: string;
+  };
+  url: string;
+  createdAt: string;
+  jobs: {
+    nodes: WorkflowRunJob[];
+  };
+}
+
 interface WorkflowRunDetailProps {
   owner: string;
   repo: string;
@@ -53,7 +66,7 @@ interface WorkflowRunDetailProps {
 
 export default function WorkflowRunDetail({ owner, repo, runId }: WorkflowRunDetailProps) {
   const { githubService } = useGitHub();
-  const [run, setRun] = useState<any | null>(null);
+  const [run, setRun] = useState<WorkflowRun | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [logsUrl, setLogsUrl] = useState<string | null>(null);
@@ -71,7 +84,7 @@ export default function WorkflowRunDetail({ owner, repo, runId }: WorkflowRunDet
         
         // Get logs URL
         try {
-          const logsUrlData = await githubService.getWorkflowRunLogs(owner, repo, parseInt(runData.runNumber, 10));
+          const logsUrlData = await githubService.getWorkflowRunLogs(owner, repo, runData.runNumber);
           setLogsUrl(logsUrlData);
         } catch (logsError) {
           console.error("Error fetching logs URL:", logsError);

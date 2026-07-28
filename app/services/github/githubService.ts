@@ -36,10 +36,251 @@ import {
   GET_TRENDING_DISCUSSIONS
 } from "./queries/discussionsQueries";
 
+export interface ClassicProject {
+  id: number;
+  name: string;
+  body: string;
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+  creator: {
+    login: string;
+    avatar_url: string;
+  };
+  owner: { login: string };
+  state: string;
+  number_of_columns?: number;
+  owner_url?: string;
+  organization_url?: string;
+}
+
+export interface ClassicProjectColumn {
+  id: number;
+  name: string;
+  cards_url: string;
+  created_at: string;
+  updated_at: string;
+  project_url: string;
+}
+
+export interface ClassicProjectCard {
+  id: number;
+  note: string;
+  created_at: string;
+  updated_at: string;
+  column_url: string;
+  content_url?: string;
+  creator?: {
+    login: string;
+    avatar_url: string;
+  };
+}
+
+interface ContributionWeek {
+  days: ContributionDay[];
+  week: number;
+}
+
+interface ContributionDay {
+  date: string;
+  count: number;
+  level: number;
+}
+
+export interface GitHubWorkflow {
+  id: string;
+  name: string;
+  state: string;
+  url: string;
+  path: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface GitHubWorkflowRunJob {
+  id: string;
+  name: string;
+  status: string;
+  conclusion: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  steps: {
+    nodes: Array<{
+      name: string;
+      status: string;
+      conclusion: string | null;
+      number: number;
+      startedAt: string;
+      completedAt: string | null;
+    }>;
+  };
+}
+
+interface GitHubWorkflowRun {
+  id: string;
+  runNumber: number;
+  createdAt: string;
+  updatedAt: string;
+  status: string;
+  conclusion: string | null;
+  url: string;
+  event: string;
+  headBranch: string;
+  headCommit: {
+    message: string;
+    committedDate: string;
+    author: {
+      name: string;
+      email: string;
+      avatarUrl: string;
+    };
+  };
+  jobs: {
+    nodes: GitHubWorkflowRunJob[];
+  };
+}
+
+export interface GitHubUserEvent {
+  id: string;
+  type: string;
+  actor: {
+    login: string;
+    avatar_url: string;
+  };
+  repo: {
+    name: string;
+    full_name: string;
+    url: string;
+  };
+  payload: {
+    commits?: Array<{ message: string; sha: string }>;
+    head?: string;
+    action?: string;
+    issue?: { title: string; body?: string | null; html_url: string };
+    pull_request?: { title: string; body?: string | null; html_url: string };
+    release?: { tag_name: string; name: string; body?: string | null; html_url: string };
+    forkee?: { full_name: string; html_url: string };
+    comment?: { body: string; html_url: string };
+    review?: { body?: string | null; html_url: string };
+  };
+  created_at: string;
+}
+
+export interface ProjectBetaSummary {
+  id: string;
+  title: string;
+  number: number;
+  shortDescription: string;
+  url: string;
+  closed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  creator: {
+    login: string;
+    avatarUrl: string;
+  };
+}
+
+export interface ProjectBetaField {
+  id: string;
+  name: string;
+  dataType: string;
+  options?: Array<{ id: string; name: string; color: string }>;
+}
+
+export interface ProjectBeta extends ProjectBetaSummary {
+  fields: { nodes: ProjectBetaField[] };
+  views: { nodes: Array<{ id: string; name: string; layout: string }> };
+}
+
+export interface ProjectBetaItem {
+  id: string;
+  content?: {
+    id: string;
+    title: string;
+    number: number;
+    state: string;
+    repository?: {
+      name: string;
+      owner: { login: string };
+    };
+  };
+  fieldValues: {
+    nodes: Array<{
+      text?: string;
+      date?: string;
+      name?: string;
+      field: { name: string };
+    }>;
+  };
+}
+
+export interface DiscussionCategory {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  description?: string;
+  isAnswerable: boolean;
+}
+
+export interface RepositoryDiscussion {
+  id: string;
+  number: number;
+  title: string;
+  body: string;
+  bodyHTML?: string;
+  createdAt: string;
+  updatedAt: string;
+  url: string;
+  author: { login: string; avatarUrl: string };
+  category: DiscussionCategory;
+  comments: { totalCount: number };
+  labels?: { nodes: Array<{ id: string; name: string; color: string }> };
+  answerChosenAt?: string | null;
+}
+
+export interface DiscussionComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  updatedAt?: string;
+  author: { login: string; avatarUrl: string };
+  isAnswer: boolean;
+  reactionGroups: Array<{ content: string; users: { totalCount: number } }>;
+  replies: {
+    totalCount: number;
+    nodes: Array<{
+      id: string;
+      body: string;
+      createdAt: string;
+      author: { login: string; avatarUrl: string };
+    }>;
+  };
+}
+
+interface PageInfo {
+  hasNextPage: boolean;
+  endCursor: string | null;
+}
+
 export class GitHubService {
   // Make octokit public so components can access it directly
   public octokit: Octokit;
   private authMethod: AuthMethod;
+  private graphql<T extends Record<string, unknown> = Record<string, unknown>>(
+    query: string,
+    variables?: Record<string, unknown>
+  ): Promise<T> {
+    return (this.octokit.graphql as unknown as (
+      query: string,
+      variables?: Record<string, unknown>
+    ) => Promise<T>)(query, variables);
+  }
+
+  private classicProjectsUnavailable(): never {
+    throw new Error("GitHub Projects (classic) is no longer available. Use Projects v2 instead.");
+  }
 
   constructor(accessTokenOrCredentials: string | AuthCredentials) {
     if (typeof accessTokenOrCredentials === 'string') {
@@ -65,6 +306,11 @@ export class GitHubService {
   // User methods
   async getCurrentUser() {
     const { data } = await this.octokit.rest.users.getAuthenticated();
+    return data;
+  }
+
+  async updateUser(options: Parameters<Octokit["rest"]["users"]["updateAuthenticated"]>[0]) {
+    const { data } = await this.octokit.rest.users.updateAuthenticated(options);
     return data;
   }
 
@@ -319,12 +565,12 @@ export class GitHubService {
 
   // User activity methods
   async getUserEvents(username: string, perPage = 30, page = 1) {
-    const { data } = await this.octokit.rest.activity.listEventsForUser({
+    const { data } = await this.octokit.rest.activity.listPublicEventsForUser({
       username,
       per_page: perPage,
       page,
     });
-    return data;
+    return data as unknown as GitHubUserEvent[];
   }
 
   async getRepositoryNotifications(owner: string, repo: string, options?: {
@@ -422,7 +668,7 @@ export class GitHubService {
     const { data } = await this.octokit.rest.gists.update({
       gist_id: gistId,
       description: options.description,
-      files: options.files,
+      files: options.files as unknown as { [key: string]: { content?: string; filename?: string | null } },
     });
     return data;
   }
@@ -454,7 +700,7 @@ export class GitHubService {
         gist_id: gistId,
       });
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -490,7 +736,7 @@ export class GitHubService {
       owner,
       repo,
     });
-    return data;
+    return Array.isArray(data) ? data : [];
   }
 
   async getCodeFrequency(owner: string, repo: string) {
@@ -524,12 +770,12 @@ export class GitHubService {
       const endDate = new Date(year, 11, 31);
 
       // Create weeks array
-      const weeks = [];
+      const weeks: ContributionWeek[] = [];
       let currentDate = new Date(startDate);
 
       while (currentDate <= endDate) {
         // Create a week
-        const week: any = { days: [] };
+        const week: ContributionWeek = { days: [], week: 0 };
 
         // Add days for this week (Sunday to Saturday)
         for (let i = 0; i < 7; i++) {
@@ -556,7 +802,7 @@ export class GitHubService {
           const commitActivity = await this.getCommitActivity(repo.owner.login, repo.name);
 
           // Process each week
-          commitActivity.forEach((week: any) => {
+          commitActivity.forEach((week: { week: number; days: number[] }) => {
             const weekTimestamp = week.week * 1000; // Convert to milliseconds
             const weekDate = new Date(weekTimestamp);
 
@@ -577,7 +823,7 @@ export class GitHubService {
 
               // Find the week and day
               for (const weekData of weeks) {
-                const dayData = weekData.days.find((d: any) => d.date === dateString);
+                const dayData = weekData.days.find((d: ContributionDay) => d.date === dateString);
                 if (dayData) {
                   dayData.count += count;
 
@@ -632,7 +878,7 @@ export class GitHubService {
   }
 
   async getWeeklyCommitCount(owner: string, repo: string) {
-    const { data } = await this.octokit.rest.repos.getWeeklyCommitCount({
+    const { data } = await this.octokit.rest.repos.getParticipationStats({
       owner,
       repo,
     });
@@ -774,7 +1020,8 @@ export class GitHubService {
       owner,
       repo,
       pull_number,
-      ...options,
+      reviewers: options.reviewers ?? [],
+      team_reviewers: options.team_reviewers,
     });
     return data;
   }
@@ -801,7 +1048,8 @@ export class GitHubService {
       const reviewRequests = await this.getPullRequestReviewRequests(owner, repo, pr.number);
       const user = await this.getCurrentUser();
 
-      const isReviewer = reviewRequests.reviewers?.some(reviewer => reviewer.login === user.login);
+      const reviewData = reviewRequests as { reviewers?: Array<{ login: string }>; users?: Array<{ login: string }> };
+      const isReviewer = reviewData.reviewers?.some((reviewer) => reviewer.login === user.login) ?? reviewData.users?.some((u) => u.login === user.login);
 
       if (isReviewer) {
         pendingReviews.push({
@@ -852,7 +1100,7 @@ export class GitHubService {
     return data;
   }
 
-  async getUserContributions(username: string, from?: Date, to?: Date) {
+  async getUserContributions(username: string, _from?: Date, _to?: Date) {
     // GitHub API doesn't provide a direct endpoint for user contributions
     // We'll use a combination of endpoints to gather this data
 
@@ -980,42 +1228,20 @@ export class GitHubService {
   }
 
   // GitHub Projects methods
-  async getOrganizationProjects(org: string, page = 1, perPage = 10) {
-    const { data } = await this.octokit.rest.projects.listForOrg({
-      org,
-      per_page: perPage,
-      page,
-      state: 'open',
-    });
-    return data;
+  async getOrganizationProjects(_org: string, _page = 1, _perPage = 10): Promise<ClassicProject[]> {
+    return [];
   }
 
-  async getUserProjects(username: string, page = 1, perPage = 10) {
-    const { data } = await this.octokit.rest.projects.listForUser({
-      username,
-      per_page: perPage,
-      page,
-      state: 'open',
-    });
-    return data;
+  async getUserProjects(_username: string, _page = 1, _perPage = 10): Promise<ClassicProject[]> {
+    return [];
   }
 
-  async getRepositoryProjects(owner: string, repo: string, page = 1, perPage = 10) {
-    const { data } = await this.octokit.rest.projects.listForRepo({
-      owner,
-      repo,
-      per_page: perPage,
-      page,
-      state: 'open',
-    });
-    return data;
+  async getRepositoryProjects(_owner: string, _repo: string, _page = 1, _perPage = 10): Promise<ClassicProject[]> {
+    return [];
   }
 
-  async getProject(project_id: number) {
-    const { data } = await this.octokit.rest.projects.get({
-      project_id,
-    });
-    return data;
+  async getProject(_project_id: number): Promise<ClassicProject> {
+    return this.classicProjectsUnavailable();
   }
 
   async createProject(options: {
@@ -1025,28 +1251,8 @@ export class GitHubService {
     body?: string;
     org?: string;
   }) {
-    if (options.org) {
-      const { data } = await this.octokit.rest.projects.createForOrg({
-        org: options.org,
-        name: options.name,
-        body: options.body,
-      });
-      return data;
-    } else if (options.repo) {
-      const { data } = await this.octokit.rest.projects.createForRepo({
-        owner: options.owner,
-        repo: options.repo,
-        name: options.name,
-        body: options.body,
-      });
-      return data;
-    } else {
-      const { data } = await this.octokit.rest.projects.createForAuthenticatedUser({
-        name: options.name,
-        body: options.body,
-      });
-      return data;
-    }
+    void options;
+    return this.classicProjectsUnavailable();
   }
 
   async updateProject(project_id: number, options: {
@@ -1056,72 +1262,54 @@ export class GitHubService {
     organization_permission?: 'read' | 'write' | 'admin' | 'none';
     private?: boolean;
   }) {
-    const { data } = await this.octokit.rest.projects.update({
-      project_id,
-      ...options,
-    });
-    return data;
+    void project_id;
+    void options;
+    return this.classicProjectsUnavailable();
   }
 
   async deleteProject(project_id: number) {
-    const { data } = await this.octokit.rest.projects.delete({
-      project_id,
-    });
-    return data;
+    void project_id;
+    return this.classicProjectsUnavailable();
   }
 
-  async getProjectColumns(project_id: number) {
-    const { data } = await this.octokit.rest.projects.listColumns({
-      project_id,
-    });
-    return data;
+  async getProjectColumns(project_id: number): Promise<ClassicProjectColumn[]> {
+    void project_id;
+    return [];
   }
 
   async getProjectColumn(column_id: number) {
-    const { data } = await this.octokit.rest.projects.getColumn({
-      column_id,
-    });
-    return data;
+    void column_id;
+    return this.classicProjectsUnavailable();
   }
 
   async createProjectColumn(project_id: number, name: string) {
-    const { data } = await this.octokit.rest.projects.createColumn({
-      project_id,
-      name,
-    });
-    return data;
+    void project_id;
+    void name;
+    return this.classicProjectsUnavailable();
   }
 
   async updateProjectColumn(column_id: number, name: string) {
-    const { data } = await this.octokit.rest.projects.updateColumn({
-      column_id,
-      name,
-    });
-    return data;
+    void column_id;
+    void name;
+    return this.classicProjectsUnavailable();
   }
 
   async deleteProjectColumn(column_id: number) {
-    const { data } = await this.octokit.rest.projects.deleteColumn({
-      column_id,
-    });
-    return data;
+    void column_id;
+    return this.classicProjectsUnavailable();
   }
 
   async moveProjectColumn(column_id: number, position: 'first' | 'last' | 'after:' | string) {
-    const { data } = await this.octokit.rest.projects.moveColumn({
-      column_id,
-      position,
-    });
-    return data;
+    void column_id;
+    void position;
+    return this.classicProjectsUnavailable();
   }
 
-  async getColumnCards(column_id: number, page = 1, perPage = 100) {
-    const { data } = await this.octokit.rest.projects.listCards({
-      column_id,
-      per_page: perPage,
-      page,
-    });
-    return data;
+  async getColumnCards(column_id: number, page = 1, perPage = 100): Promise<ClassicProjectCard[]> {
+    void column_id;
+    void page;
+    void perPage;
+    return [];
   }
 
   async getProjectColumnCards(column_id: number, page = 1, perPage = 100) {
@@ -1129,10 +1317,8 @@ export class GitHubService {
   }
 
   async getCard(card_id: number) {
-    const { data } = await this.octokit.rest.projects.getCard({
-      card_id,
-    });
-    return data;
+    void card_id;
+    return this.classicProjectsUnavailable();
   }
 
   async createCard(column_id: number, options: {
@@ -1140,35 +1326,27 @@ export class GitHubService {
     content_id?: number;
     content_type?: 'Issue' | 'PullRequest';
   }) {
-    const { data } = await this.octokit.rest.projects.createCard({
-      column_id,
-      ...options,
-    });
-    return data;
+    void column_id;
+    void options;
+    return this.classicProjectsUnavailable();
   }
 
   async updateCard(card_id: number, note: string) {
-    const { data } = await this.octokit.rest.projects.updateCard({
-      card_id,
-      note,
-    });
-    return data;
+    void card_id;
+    void note;
+    return this.classicProjectsUnavailable();
   }
 
   async deleteCard(card_id: number) {
-    const { data } = await this.octokit.rest.projects.deleteCard({
-      card_id,
-    });
-    return data;
+    void card_id;
+    return this.classicProjectsUnavailable();
   }
 
   async moveCard(card_id: number, position: 'top' | 'bottom' | 'after:' | string, column_id?: number) {
-    const { data } = await this.octokit.rest.projects.moveCard({
-      card_id,
-      position,
-      column_id,
-    });
-    return data;
+    void card_id;
+    void position;
+    void column_id;
+    return this.classicProjectsUnavailable();
   }
 
   async getAllUserProjects() {
@@ -1178,7 +1356,7 @@ export class GitHubService {
 
   async getAllOrganizationProjects() {
     const orgs = await this.getUserOrganizations();
-    let allProjects: any[] = [];
+    let allProjects: ClassicProject[] = [];
 
     for (const org of orgs) {
       const projects = await this.getOrganizationProjects(org.login, 1, 100);
@@ -1189,8 +1367,8 @@ export class GitHubService {
   }
 
   async getAllRepositoryProjects() {
-    const repos = await this.getUserRepositories();
-    let allProjects: any[] = [];
+    const repos = await this.getUserRepositories("");
+    let allProjects: ClassicProject[] = [];
 
     for (const repo of repos) {
       const projects = await this.getRepositoryProjects(repo.owner.login, repo.name, 1, 100);
@@ -1227,7 +1405,7 @@ export class GitHubService {
 
   // GitHub Projects (beta) methods
   async getUserProjectsBeta(username: string, first = 20) {
-    const { user } = await this.octokit.graphql(GET_USER_PROJECTS_BETA, {
+    const { user } = await this.graphql<{ user: { projectsV2: { nodes: ProjectBetaSummary[] } } }>(GET_USER_PROJECTS_BETA, {
       login: username,
       first
     });
@@ -1235,7 +1413,7 @@ export class GitHubService {
   }
 
   async getOrgProjectsBeta(org: string, first = 20) {
-    const { organization } = await this.octokit.graphql(GET_ORG_PROJECTS_BETA, {
+    const { organization } = await this.graphql<{ organization: { projectsV2: { nodes: ProjectBetaSummary[] } } }>(GET_ORG_PROJECTS_BETA, {
       org,
       first
     });
@@ -1249,7 +1427,7 @@ export class GitHubService {
 
   async getAllOrgProjectsBeta() {
     const orgs = await this.getUserOrganizations();
-    let allProjects: any[] = [];
+    let allProjects: ProjectBetaSummary[] = [];
 
     for (const org of orgs) {
       const projects = await this.getOrgProjectsBeta(org.login);
@@ -1262,14 +1440,14 @@ export class GitHubService {
   async getProjectBeta(owner: string, number: number) {
     try {
       // Try to get as user project first
-      const { user } = await this.octokit.graphql(GET_PROJECT_BETA, {
+      const { user } = await this.graphql<{ user: { projectV2: ProjectBeta } }>(GET_PROJECT_BETA, {
         owner,
         number
       });
       return user.projectV2;
-    } catch (error) {
+    } catch {
       // If not found, try as org project
-      const { organization } = await this.octokit.graphql(GET_ORG_PROJECT_BETA, {
+      const { organization } = await this.graphql<{ organization: { projectV2: ProjectBeta } }>(GET_ORG_PROJECT_BETA, {
         org: owner,
         number
       });
@@ -1278,7 +1456,7 @@ export class GitHubService {
   }
 
   async getProjectItems(projectId: string, first = 100) {
-    const { node } = await this.octokit.graphql(GET_PROJECT_ITEMS, {
+    const { node } = await this.graphql<{ node: { items: { nodes: ProjectBetaItem[] } } }>(GET_PROJECT_ITEMS, {
       projectId,
       first
     });
@@ -1286,7 +1464,7 @@ export class GitHubService {
   }
 
   async addItemToProject(projectId: string, contentId: string) {
-    const result = await this.octokit.graphql(ADD_ITEM_TO_PROJECT, {
+    const result = await this.graphql<{ addProjectV2ItemById: { item: Record<string, unknown> } }>(ADD_ITEM_TO_PROJECT, {
       projectId,
       contentId
     });
@@ -1294,7 +1472,7 @@ export class GitHubService {
   }
 
   async createDraftIssue(projectId: string, title: string, body?: string) {
-    const result = await this.octokit.graphql(CREATE_DRAFT_ISSUE, {
+    const result = await this.graphql<{ addProjectV2DraftIssue: { projectItem: Record<string, unknown> } }>(CREATE_DRAFT_ISSUE, {
       projectId,
       title,
       body
@@ -1303,7 +1481,7 @@ export class GitHubService {
   }
 
   async updateProjectItemField(projectId: string, itemId: string, fieldId: string, value: string) {
-    const result = await this.octokit.graphql(UPDATE_PROJECT_ITEM_FIELD, {
+    const result = await this.graphql<{ updateProjectV2ItemFieldValue: { projectV2Item: Record<string, unknown> } }>(UPDATE_PROJECT_ITEM_FIELD, {
       projectId,
       itemId,
       fieldId,
@@ -1314,7 +1492,7 @@ export class GitHubService {
 
   // GitHub Actions methods
   async getRepositoryWorkflows(owner: string, repo: string, first = 100) {
-    const { repository } = await this.octokit.graphql(GET_REPOSITORY_WORKFLOWS, {
+    const { repository } = await this.graphql<{ repository: { workflows: { nodes: GitHubWorkflow[] } } }>(GET_REPOSITORY_WORKFLOWS, {
       owner,
       name: repo,
       first
@@ -1323,7 +1501,7 @@ export class GitHubService {
   }
 
   async getWorkflowRuns(owner: string, repo: string, workflowId: string, first = 20) {
-    const { node } = await this.octokit.graphql(GET_WORKFLOW_RUNS, {
+    const { node } = await this.graphql<{ node: { runs: { nodes: Array<Omit<GitHubWorkflowRun, "jobs">> } } }>(GET_WORKFLOW_RUNS, {
       owner,
       name: repo,
       workflowId,
@@ -1333,14 +1511,14 @@ export class GitHubService {
   }
 
   async getWorkflowRun(runId: string) {
-    const { node } = await this.octokit.graphql(GET_WORKFLOW_RUN, {
+    const { node } = await this.graphql<{ node: GitHubWorkflowRun }>(GET_WORKFLOW_RUN, {
       runId
     });
     return node;
   }
 
   async triggerWorkflow(owner: string, repo: string, workflowId: string, ref: string, inputs: Record<string, string> = {}) {
-    const result = await this.octokit.graphql(TRIGGER_WORKFLOW, {
+    const result = await this.graphql<{ createWorkflowDispatch: Record<string, unknown> }>(TRIGGER_WORKFLOW, {
       input: {
         workflowId,
         ref,
@@ -1351,7 +1529,7 @@ export class GitHubService {
   }
 
   async cancelWorkflowRun(runId: string) {
-    const result = await this.octokit.graphql(CANCEL_WORKFLOW_RUN, {
+    const result = await this.graphql<{ cancelWorkflowRun: Record<string, unknown> }>(CANCEL_WORKFLOW_RUN, {
       input: {
         runId
       }
@@ -1360,7 +1538,7 @@ export class GitHubService {
   }
 
   async rerunWorkflow(runId: string) {
-    const result = await this.octokit.graphql(RERUN_WORKFLOW, {
+    const result = await this.graphql<{ rerunWorkflow: Record<string, unknown> }>(RERUN_WORKFLOW, {
       input: {
         runId
       }
@@ -1369,7 +1547,7 @@ export class GitHubService {
   }
 
   async getWorkflowUsage(owner: string, repo: string) {
-    const { repository } = await this.octokit.graphql(GET_WORKFLOW_USAGE, {
+    const { repository } = await this.graphql<{ repository: { actions: { workflows: { nodes: unknown[] } } } }>(GET_WORKFLOW_USAGE, {
       owner,
       name: repo
     });
@@ -1377,7 +1555,7 @@ export class GitHubService {
   }
 
   async getRepositorySecrets(owner: string, repo: string) {
-    const { repository } = await this.octokit.graphql(GET_REPOSITORY_SECRETS, {
+    const { repository } = await this.graphql<{ repository: { secrets: { nodes: unknown[] } } }>(GET_REPOSITORY_SECRETS, {
       owner,
       name: repo
     });
@@ -1385,7 +1563,7 @@ export class GitHubService {
   }
 
   async getRepositoryEnvironments(owner: string, repo: string) {
-    const { repository } = await this.octokit.graphql(GET_REPOSITORY_ENVIRONMENTS, {
+    const { repository } = await this.graphql<{ repository: { environments: { nodes: unknown[] } } }>(GET_REPOSITORY_ENVIRONMENTS, {
       owner,
       name: repo
     });
@@ -1437,7 +1615,11 @@ export class GitHubService {
 
   // GitHub Discussions methods
   async getRepositoryDiscussions(owner: string, repo: string, first = 20, after?: string) {
-    const { repository } = await this.octokit.graphql(GET_REPOSITORY_DISCUSSIONS, {
+    const { repository } = await this.graphql<{ repository: { discussions: {
+      nodes: RepositoryDiscussion[];
+      totalCount: number;
+      pageInfo: PageInfo;
+    } } }>(GET_REPOSITORY_DISCUSSIONS, {
       owner,
       name: repo,
       first,
@@ -1447,7 +1629,7 @@ export class GitHubService {
   }
 
   async getDiscussion(owner: string, repo: string, number: number) {
-    const { repository } = await this.octokit.graphql(GET_DISCUSSION, {
+    const { repository } = await this.graphql<{ repository: { discussion: RepositoryDiscussion } }>(GET_DISCUSSION, {
       owner,
       name: repo,
       number
@@ -1456,7 +1638,11 @@ export class GitHubService {
   }
 
   async getDiscussionComments(owner: string, repo: string, number: number, first = 20, after?: string) {
-    const { repository } = await this.octokit.graphql(GET_DISCUSSION_COMMENTS, {
+    const { repository } = await this.graphql<{ repository: { discussion: { comments: {
+      nodes: DiscussionComment[];
+      totalCount: number;
+      pageInfo: PageInfo;
+    } } } }>(GET_DISCUSSION_COMMENTS, {
       owner,
       name: repo,
       number,
@@ -1467,7 +1653,7 @@ export class GitHubService {
   }
 
   async getDiscussionCategories(owner: string, repo: string) {
-    const { repository } = await this.octokit.graphql(GET_DISCUSSION_CATEGORIES, {
+    const { repository } = await this.graphql<{ repository: { discussionCategories: { nodes: DiscussionCategory[] } } }>(GET_DISCUSSION_CATEGORIES, {
       owner,
       name: repo
     });
@@ -1480,7 +1666,7 @@ export class GitHubService {
     title: string;
     body: string;
   }) {
-    const result = await this.octokit.graphql(CREATE_DISCUSSION, {
+    const result = await this.graphql<{ createDiscussion: { discussion: { id: string; number: number; url: string } } }>(CREATE_DISCUSSION, {
       input
     });
     return result.createDiscussion.discussion;
@@ -1490,7 +1676,7 @@ export class GitHubService {
     discussionId: string;
     body: string;
   }) {
-    const result = await this.octokit.graphql(ADD_DISCUSSION_COMMENT, {
+    const result = await this.graphql<{ addDiscussionComment: { comment: Record<string, unknown> } }>(ADD_DISCUSSION_COMMENT, {
       input
     });
     return result.addDiscussionComment.comment;
@@ -1500,7 +1686,7 @@ export class GitHubService {
     commentId: string;
     body: string;
   }) {
-    const result = await this.octokit.graphql(ADD_DISCUSSION_REPLY, {
+    const result = await this.graphql<{ addDiscussionReply: { reply: Record<string, unknown> } }>(ADD_DISCUSSION_REPLY, {
       input
     });
     return result.addDiscussionReply.reply;
@@ -1509,7 +1695,7 @@ export class GitHubService {
   async markDiscussionCommentAsAnswer(input: {
     commentId: string;
   }) {
-    const result = await this.octokit.graphql(MARK_DISCUSSION_COMMENT_AS_ANSWER, {
+    const result = await this.graphql<{ markDiscussionCommentAsAnswer: { discussion: Record<string, unknown> } }>(MARK_DISCUSSION_COMMENT_AS_ANSWER, {
       input
     });
     return result.markDiscussionCommentAsAnswer.discussion;
@@ -1518,7 +1704,7 @@ export class GitHubService {
   async unmarkDiscussionCommentAsAnswer(input: {
     commentId: string;
   }) {
-    const result = await this.octokit.graphql(UNMARK_DISCUSSION_COMMENT_AS_ANSWER, {
+    const result = await this.graphql<{ unmarkDiscussionCommentAsAnswer: { discussion: Record<string, unknown> } }>(UNMARK_DISCUSSION_COMMENT_AS_ANSWER, {
       input
     });
     return result.unmarkDiscussionCommentAsAnswer.discussion;
@@ -1528,7 +1714,7 @@ export class GitHubService {
     subjectId: string;
     content: 'THUMBS_UP' | 'THUMBS_DOWN' | 'LAUGH' | 'HOORAY' | 'CONFUSED' | 'HEART' | 'ROCKET' | 'EYES';
   }) {
-    const result = await this.octokit.graphql(ADD_REACTION, {
+    const result = await this.graphql<{ addReaction: { reaction: Record<string, unknown> } }>(ADD_REACTION, {
       input
     });
     return result.addReaction.reaction;
@@ -1538,7 +1724,7 @@ export class GitHubService {
     subjectId: string;
     content: 'THUMBS_UP' | 'THUMBS_DOWN' | 'LAUGH' | 'HOORAY' | 'CONFUSED' | 'HEART' | 'ROCKET' | 'EYES';
   }) {
-    const result = await this.octokit.graphql(REMOVE_REACTION, {
+    const result = await this.graphql<{ removeReaction: { reaction: Record<string, unknown> } }>(REMOVE_REACTION, {
       input
     });
     return result.removeReaction.reaction;
@@ -1548,7 +1734,7 @@ export class GitHubService {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const { repository } = await this.octokit.graphql(GET_TRENDING_DISCUSSIONS, {
+    const { repository } = await this.graphql<{ repository: { discussions: { nodes: unknown[] } } }>(GET_TRENDING_DISCUSSIONS, {
       owner,
       name: repo,
       since: since.toISOString()
@@ -1557,7 +1743,7 @@ export class GitHubService {
   }
 
   async getRepositoryIdByName(owner: string, repo: string) {
-    const { repository } = await this.octokit.graphql(`
+    const { repository } = await this.graphql<{ repository: { id: string } }>(`
       query GetRepositoryId($owner: String!, $name: String!) {
         repository(owner: $owner, name: $name) {
           id

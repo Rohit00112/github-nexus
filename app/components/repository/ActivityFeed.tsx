@@ -40,7 +40,14 @@ interface Event {
     name: string;
     url: string;
   };
-  payload: any;
+  payload: {
+    action?: string;
+    commits?: unknown[];
+    pull_request?: { number: number };
+    issue?: { number: number };
+    ref_type?: string;
+    ref?: string;
+  };
   created_at: string;
 }
 

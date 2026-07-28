@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { 
@@ -79,7 +80,7 @@ export class RuleActionService {
         await this.mergePullRequest(action as MergeAction, owner, repo, issueNumber);
         break;
       default:
-        throw new Error(`Unsupported action type: ${action.type}`);
+        throw new Error(`Unsupported action type: ${(action as any).type}`);
     }
   }
 

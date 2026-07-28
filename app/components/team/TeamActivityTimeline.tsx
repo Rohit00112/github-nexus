@@ -41,7 +41,7 @@ export default function TeamActivityTimeline({ org, team_slug }: TeamActivityTim
         setError(null);
         
         // Get team members
-        let members: any[] = [];
+        let members: Array<{ login: string }> = [];
         
         if (team_slug) {
           members = await githubService.getTeamMembers(org, team_slug);
@@ -50,7 +50,7 @@ export default function TeamActivityTimeline({ org, team_slug }: TeamActivityTim
         }
         
         // Get team repositories
-        let repositories: any[] = [];
+        let repositories: Array<{ name: string }> = [];
         
         if (team_slug) {
           repositories = await githubService.getTeamRepositories(org, team_slug);

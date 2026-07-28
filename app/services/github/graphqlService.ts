@@ -23,7 +23,7 @@ export class GitHubGraphQLService {
    * @param variables Variables to be used in the query
    * @returns The query result data
    */
-  async query<T = any>(query: string, variables: Record<string, any> = {}): Promise<T> {
+  async query<T = Record<string, unknown>>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
     try {
       const response = await this.octokit.graphql<T>(query, variables);
       return response;

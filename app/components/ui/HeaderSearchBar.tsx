@@ -14,92 +14,73 @@ const HeaderSearchBar: FC<HeaderSearchBarProps> = ({ className = "" }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
       router.push(`/search?q=${encodeURIComponent(query.trim())}`);
       setIsFocused(false);
-      if (inputRef.current) {
-        inputRef.current.blur();
-      }
+      inputRef.current?.blur();
     }
   };
 
-  // Handle click outside to close expanded search on mobile
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (formRef.current && !formRef.current.contains(event.target as Node)) {
         setIsFocused(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle keyboard shortcut (/ key) to focus search
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      // Focus search when / is pressed, unless user is typing in an input or textarea
       if (
-        event.key === '/' && 
-        document.activeElement?.tagName !== 'INPUT' && 
+        event.key === '/' &&
+        document.activeElement?.tagName !== 'INPUT' &&
         document.activeElement?.tagName !== 'TEXTAREA'
       ) {
         event.preventDefault();
         inputRef.current?.focus();
       }
-      
-      // Close search on Escape
       if (event.key === 'Escape' && isFocused) {
         setIsFocused(false);
         inputRef.current?.blur();
       }
     }
-
     document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isFocused]);
 
   return (
-    <form 
+    <form
       ref={formRef}
-      onSubmit={handleSubmit} 
-      className={`relative ${isFocused ? 'w-full md:w-64 lg:w-80' : 'w-40 md:w-64'} transition-all duration-200 ${className}`}
+      onSubmit={handleSubmit}
+      className={`relative ${className}`}
     >
       <div className="relative">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
-          placeholder="Search repositories..."
-          className="w-full pl-9 pr-4 py-1.5 bg-gray-700 text-white placeholder-gray-400 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder="Search..."
+          className="w-full pl-8 pr-10 py-1.5 bg-muted/50 text-sm text-foreground placeholder-muted-foreground rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
         />
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        
-        {isFocused && (
-          <div className="hidden md:block absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
-            Press Enter to search
+        {!isFocused && (
+          <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+            <kbd className="hidden md:inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground bg-muted border border-border rounded">
+              /
+            </kbd>
           </div>
         )}
       </div>
-      
-      {isFocused && (
-        <div className="absolute right-0 mt-1 text-xs text-gray-400 md:hidden">
-          Press Enter to search
-        </div>
-      )}
     </form>
   );
 };

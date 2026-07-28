@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useGitHub } from "../../context/GitHubContext";
+import type { ClassicProject } from "../../services/github/githubService";
 
 interface CreateProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onProjectCreated: (project: any) => void;
+  onProjectCreated: (project: ClassicProject) => void;
 }
 
 interface Repository {
@@ -48,8 +49,8 @@ export default function CreateProjectModal({
         
         // Fetch repositories and organizations in parallel
         const [reposData, orgsData] = await Promise.all([
-          githubService.getUserRepositories(),
-          githubService.getUserOrganizations(),
+          githubService.getUserRepositories("") as Promise<Repository[]>,
+          githubService.getUserOrganizations() as Promise<Organization[]>,
         ]);
         
         setRepositories(reposData);

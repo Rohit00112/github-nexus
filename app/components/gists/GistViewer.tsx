@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useGitHub } from "../../context/GitHubContext";
+import Image from "next/image";
 
 interface GistFile {
   filename: string;
@@ -36,7 +37,7 @@ interface GistComment {
   user: {
     login: string;
     avatar_url: string;
-  };
+  } | null;
   created_at: string;
   updated_at: string;
 }
@@ -66,10 +67,10 @@ export default function GistViewer({ gistId }: GistViewerProps) {
         setError(null);
         
         const gistData = await githubService.getGist(gistId);
-        setGist(gistData);
+        setGist(gistData as Gist);
         
         // Set the first file as active by default
-        const fileNames = Object.keys(gistData.files);
+        const fileNames = Object.keys(gistData.files ?? {});
         if (fileNames.length > 0 && !activeFile) {
           setActiveFile(fileNames[0]);
         }
@@ -80,7 +81,7 @@ export default function GistViewer({ gistId }: GistViewerProps) {
         
         // Fetch comments
         const commentsData = await githubService.getGistComments(gistId);
-        setComments(commentsData);
+        setComments(commentsData as GistComment[]);
       } catch (err) {
         console.error("Error fetching gist:", err);
         setError("Failed to load gist. Please try again later.");
@@ -215,7 +216,7 @@ export default function GistViewer({ gistId }: GistViewerProps) {
           </div>
         </div>
         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-2">
-          <img src={gist.owner.avatar_url} alt={gist.owner.login} className="w-5 h-5 rounded-full mr-2" />
+          <Image src={gist.owner.avatar_url} alt={gist.owner.login} className="w-5 h-5 rounded-full mr-2" unoptimized width={20} height={20} />
           <a href={gist.owner.html_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
             {gist.owner.login}
           </a>
@@ -302,8 +303,8 @@ export default function GistViewer({ gistId }: GistViewerProps) {
               <div key={comment.id} className="p-4 bg-gray-50 dark:bg-gray-900 rounded-md">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center">
-                    <img src={comment.user.avatar_url} alt={comment.user.login} className="w-6 h-6 rounded-full mr-2" />
-                    <span className="font-medium text-gray-800 dark:text-gray-200">{comment.user.login}</span>
+                    {comment.user && <Image src={comment.user.avatar_url} alt={comment.user.login} className="w-6 h-6 rounded-full mr-2" unoptimized width={24} height={24} />}
+                    <span className="font-medium text-gray-800 dark:text-gray-200">{comment.user?.login ?? 'Unknown'}</span>
                     <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                       {formatDate(comment.created_at)}
                       {comment.updated_at !== comment.created_at && " (edited)"}

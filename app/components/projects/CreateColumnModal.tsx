@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useGitHub } from "../../context/GitHubContext";
+import type { ClassicProjectColumn } from "../../services/github/githubService";
 
 interface CreateColumnModalProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: number;
-  onColumnCreated: (column: any) => void;
+  onColumnCreated: (column: ClassicProjectColumn) => void;
 }
 
 export default function CreateColumnModal({

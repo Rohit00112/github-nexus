@@ -300,6 +300,8 @@ export interface RuleExecutionResult {
     type: ActionType;
     success: boolean;
     message?: string;
+    testMode?: boolean;
   }[];
   timestamp: string;
+  testMode?: boolean;
 }

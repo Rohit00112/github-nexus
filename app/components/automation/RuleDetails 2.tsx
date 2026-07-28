@@ -236,7 +236,7 @@ function ActionRenderer({ action }: ActionRendererProps) {
       description = `Merge PR using ${action.mergeMethod || 'merge'} method`;
       break;
     default:
-      description = `Action: ${action.type}`;
+      description = `Action: ${(action as { type: string }).type}`;
   }
   
   return <p>{description}</p>;

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useGitHub } from "../../context/GitHubContext";
-import Link from "next/link";
 import {
   Card,
   CardBody,
@@ -24,20 +23,19 @@ import {
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ClockIcon,
-  UserCircleIcon,
   PaperAirplaneIcon,
   EllipsisVerticalIcon,
-  PencilIcon,
-  TrashIcon,
   FlagIcon,
   HandThumbUpIcon,
-  HandThumbDownIcon,
   FaceSmileIcon,
   HeartIcon,
-  RocketLaunchIcon,
-  EyeIcon
+  LinkIcon
 } from "@heroicons/react/24/outline";
 import ReactMarkdown from 'react-markdown';
+import type {
+  DiscussionComment,
+  RepositoryDiscussion,
+} from "../../services/github/githubService";
 
 interface DiscussionDetailProps {
   owner: string;
@@ -47,18 +45,44 @@ interface DiscussionDetailProps {
 
 export default function DiscussionDetail({ owner, repo, discussionNumber }: DiscussionDetailProps) {
   const { githubService } = useGitHub();
-  const [discussion, setDiscussion] = useState<any | null>(null);
-  const [comments, setComments] = useState<any[]>([]);
+  const [discussion, setDiscussion] = useState<RepositoryDiscussion | null>(null);
+  const [comments, setComments] = useState<DiscussionComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
   const [page, setPage] = useState(1);
   const [totalComments, setTotalComments] = useState(0);
-  const [hasNextPage, setHasNextPage] = useState(false);
+  const [_hasNextPage, setHasNextPage] = useState(false);
   const [endCursor, setEndCursor] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const itemsPerPage = 10;
+
+  // Fetch comments
+  const fetchComments = useCallback(async () => {
+    if (!githubService) return;
+    
+    try {
+      setIsLoadingComments(true);
+      
+      const commentsData = await githubService.getDiscussionComments(
+        owner,
+        repo,
+        discussionNumber,
+        itemsPerPage,
+        page > 1 ? endCursor ?? undefined : undefined
+      );
+      
+      setComments(commentsData.nodes);
+      setTotalComments(commentsData.totalCount);
+      setHasNextPage(commentsData.pageInfo.hasNextPage);
+      setEndCursor(commentsData.pageInfo.endCursor);
+    } catch (err) {
+      console.error("Error fetching comments:", err);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  }, [githubService, owner, repo, discussionNumber, page, endCursor, itemsPerPage]);
 
   // Fetch discussion details
   useEffect(() => {
@@ -84,40 +108,14 @@ export default function DiscussionDetail({ owner, repo, discussionNumber }: Disc
     }
     
     fetchDiscussionDetails();
-  }, [githubService, owner, repo, discussionNumber]);
+  }, [githubService, owner, repo, discussionNumber, fetchComments]);
 
   // Fetch comments when page changes
   useEffect(() => {
     if (discussion) {
       fetchComments();
     }
-  }, [page]);
-
-  // Fetch comments
-  async function fetchComments() {
-    if (!githubService) return;
-    
-    try {
-      setIsLoadingComments(true);
-      
-      const commentsData = await githubService.getDiscussionComments(
-        owner,
-        repo,
-        discussionNumber,
-        itemsPerPage,
-        page > 1 ? endCursor : undefined
-      );
-      
-      setComments(commentsData.nodes);
-      setTotalComments(commentsData.totalCount);
-      setHasNextPage(commentsData.pageInfo.hasNextPage);
-      setEndCursor(commentsData.pageInfo.endCursor);
-    } catch (err) {
-      console.error("Error fetching comments:", err);
-    } finally {
-      setIsLoadingComments(false);
-    }
-  }
+  }, [page, discussion, fetchComments]);
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -201,7 +199,7 @@ export default function DiscussionDetail({ owner, repo, discussionNumber }: Disc
     try {
       await githubService.addReaction({
         subjectId,
-        content: content as any
+        content: content as 'THUMBS_UP' | 'THUMBS_DOWN' | 'LAUGH' | 'HOORAY' | 'CONFUSED' | 'HEART' | 'ROCKET' | 'EYES'
       });
       
       // Refresh comments
@@ -349,25 +347,16 @@ export default function DiscussionDetail({ owner, repo, discussionNumber }: Disc
                       </Button>
                     </DropdownTrigger>
                     <DropdownMenu aria-label="Comment actions">
-                      {discussion.category.isAnswerable && (
-                        comment.isAnswer ? (
-                          <DropdownItem
-                            key="unmark-answer"
-                            startContent={<CheckCircleIcon className="h-4 w-4" />}
-                            onPress={() => handleUnmarkAsAnswer(comment.id)}
-                          >
-                            Unmark as answer
-                          </DropdownItem>
-                        ) : (
-                          <DropdownItem
-                            key="mark-answer"
-                            startContent={<CheckCircleIcon className="h-4 w-4" />}
-                            onPress={() => handleMarkAsAnswer(comment.id)}
-                          >
-                            Mark as answer
-                          </DropdownItem>
-                        )
-                      )}
+                      <DropdownItem
+                        key="toggle-answer"
+                        className={discussion.category.isAnswerable ? "" : "hidden"}
+                        startContent={<CheckCircleIcon className="h-4 w-4" />}
+                        onPress={() => comment.isAnswer
+                          ? handleUnmarkAsAnswer(comment.id)
+                          : handleMarkAsAnswer(comment.id)}
+                      >
+                        {comment.isAnswer ? "Unmark as answer" : "Mark as answer"}
+                      </DropdownItem>
                       <DropdownItem
                         key="copy-link"
                         startContent={<LinkIcon className="h-4 w-4" />}
@@ -392,7 +381,7 @@ export default function DiscussionDetail({ owner, repo, discussionNumber }: Disc
               </CardBody>
               <CardFooter className="flex justify-between items-center pt-0">
                 <div className="flex items-center gap-2">
-                  {comment.reactionGroups.map((reaction: any) => (
+                  {comment.reactionGroups.map((reaction: { content: string; users: { totalCount: number } }) => (
                     reaction.users.totalCount > 0 && (
                       <Chip key={reaction.content} size="sm" variant="flat">
                         {getReactionEmoji(reaction.content)} {reaction.users.totalCount}
@@ -419,7 +408,7 @@ export default function DiscussionDetail({ owner, repo, discussionNumber }: Disc
                     Replies ({comment.replies.totalCount})
                   </div>
                   <div className="space-y-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
-                    {comment.replies.nodes.map((reply: any) => (
+                    {comment.replies.nodes.map((reply: { id: string; body: string; createdAt: string; author: { login: string; avatarUrl: string } }) => (
                       <div key={reply.id} className="text-sm">
                         <div className="flex items-center gap-2 mb-1">
                           <Avatar src={reply.author.avatarUrl} size="sm" />

@@ -4,7 +4,7 @@ import { FC, useState, useEffect } from 'react';
 import { useGitHub } from '../../context/GitHubContext';
 import { Card, CardBody, CardHeader, Spinner, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Progress } from '@nextui-org/react';
 import { Bar, Pie, Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, ChartData } from 'chart.js';
 import { ActivityFilters } from './ActivityFilters';
 
 // Register ChartJS components
@@ -350,7 +350,7 @@ const ContributionsAnalysis: FC<ContributionsAnalysisProps> = ({ filters }) => {
             </svg>
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">No contribution data available</h3>
             <p className="text-gray-600 dark:text-gray-400">
-              We couldn't find any contribution data for your account.
+              We couldn&apos;t find any contribution data for your account.
             </p>
           </div>
         </CardBody>
@@ -392,9 +392,9 @@ const ContributionsAnalysis: FC<ContributionsAnalysisProps> = ({ filters }) => {
                 </span>
               </div>
               <div className="h-64 flex items-center justify-center">
-                {chartType === 'pie' && <Pie data={getContributionTypeChartData() as any} />}
-                {chartType === 'doughnut' && <Doughnut data={getContributionTypeChartData() as any} />}
-                {chartType === 'bar' && <Bar data={getContributionTypeChartData() as any} />}
+                {chartType === 'pie' && <Pie data={getContributionTypeChartData() as ChartData<"pie">} />}
+                {chartType === 'doughnut' && <Doughnut data={getContributionTypeChartData() as ChartData<"doughnut">} />}
+                {chartType === 'bar' && <Bar data={getContributionTypeChartData() as ChartData<"bar">} />}
               </div>
             </div>
             
@@ -473,7 +473,7 @@ const ContributionsAnalysis: FC<ContributionsAnalysisProps> = ({ filters }) => {
         <CardBody>
           <div className="h-80">
             <Bar 
-              data={getContributionsByRepoChartData() as any}
+              data={getContributionsByRepoChartData() as ChartData<"bar">}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
@@ -514,7 +514,7 @@ const ContributionsAnalysis: FC<ContributionsAnalysisProps> = ({ filters }) => {
         <CardBody>
           <div className="h-80">
             <Bar 
-              data={getContributionsByMonthChartData() as any}
+              data={getContributionsByMonthChartData() as ChartData<"bar">}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,

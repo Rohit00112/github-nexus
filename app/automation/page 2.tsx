@@ -12,7 +12,7 @@ import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 export default function AutomationPage() {
   const { status } = useSession();
-  const { rules, isLoading } = useAutomation();
+  const { rules: _rules, isLoading } = useAutomation();
   const [isCreating, setIsCreating] = useState(false);
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
 

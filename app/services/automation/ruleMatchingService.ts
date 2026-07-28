@@ -17,6 +17,50 @@ import {
   TimeCondition
 } from "@/app/types/automation";
 
+interface AutomationResource {
+  title?: string;
+  body?: string | null;
+  labels?: Array<{ name?: string } | string>;
+  user?: { login: string } | null;
+  assignees?: Array<{ login: string }> | null;
+  draft?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  closed_at?: string | null;
+  files?: Array<{ filename: string }>;
+  head?: { ref?: string };
+  base?: { repo?: { owner?: { login?: string }; name?: string } };
+  requested_reviewers?: Array<{ login: string }>;
+  reviews?: Array<{ user?: { login?: string }; submitted_at?: string; state?: string }>;
+}
+
+interface LabelItem {
+  name?: string;
+}
+
+interface AssigneeItem {
+  login?: string;
+}
+
+interface ReviewerItem {
+  login?: string;
+}
+
+interface ReviewItem {
+  user?: { login?: string };
+  submitted_at?: string;
+  state?: string;
+}
+
+interface FileItem {
+  filename?: string;
+}
+
+interface RepoInfo {
+  owner?: { login?: string };
+  name?: string;
+}
+
 /**
  * Service for evaluating if issues/PRs match rule conditions
  */
@@ -24,7 +68,7 @@ export class RuleMatchingService {
   /**
    * Evaluate a condition group against a resource
    */
-  evaluateConditionGroup(group: ConditionGroup, resource: any): boolean {
+  evaluateConditionGroup(group: ConditionGroup, resource: AutomationResource): boolean {
     if (group.operator === ConditionOperator.AND) {
       // All conditions must be true
       return group.conditions.every(condition => {
@@ -53,30 +97,30 @@ export class RuleMatchingService {
   /**
    * Evaluate a single condition against a resource
    */
-  evaluateCondition(condition: Condition, resource: any): boolean {
+  evaluateCondition(condition: Condition, resource: AutomationResource): boolean {
     let result = false;
 
     switch (condition.type) {
       case ConditionType.TITLE_CONTAINS:
-        result = this.evaluateTextMatch(condition as TextMatchCondition, resource.title);
+        result = this.evaluateTextMatch(condition as TextMatchCondition, resource.title ?? '');
         break;
       case ConditionType.BODY_CONTAINS:
         result = resource.body ? this.evaluateTextMatch(condition as TextMatchCondition, resource.body) : false;
         break;
       case ConditionType.TITLE_MATCHES_REGEX:
-        result = this.evaluateRegexMatch(condition as RegexMatchCondition, resource.title);
+        result = this.evaluateRegexMatch(condition as RegexMatchCondition, resource.title ?? '');
         break;
       case ConditionType.BODY_MATCHES_REGEX:
         result = resource.body ? this.evaluateRegexMatch(condition as RegexMatchCondition, resource.body) : false;
         break;
       case ConditionType.HAS_LABEL:
-        result = this.evaluateLabelMatch(condition as LabelCondition, resource.labels);
+        result = this.evaluateLabelMatch(condition as LabelCondition, (resource.labels ?? []) as LabelItem[]);
         break;
       case ConditionType.CREATED_BY:
-        result = this.evaluateUserMatch(condition as UserCondition, resource.user?.login);
+        result = this.evaluateUserMatch(condition as UserCondition, resource.user?.login ?? '');
         break;
       case ConditionType.ASSIGNED_TO:
-        result = this.evaluateAssigneeMatch(condition as UserCondition, resource.assignees);
+        result = this.evaluateAssigneeMatch(condition as UserCondition, (resource.assignees ?? []) as AssigneeItem[]);
         break;
       case ConditionType.MENTIONS_USER:
         const mentionRegex = new RegExp(`@${(condition as UserCondition).username}\\b`, 'i');
@@ -86,10 +130,10 @@ export class RuleMatchingService {
         result = this.evaluateFilePathMatch(condition as FilePathCondition, resource.files || []);
         break;
       case ConditionType.BRANCH_MATCHES:
-        result = this.evaluateBranchMatch(condition as BranchCondition, resource.head?.ref);
+        result = this.evaluateBranchMatch(condition as BranchCondition, resource.head?.ref ?? '');
         break;
       case ConditionType.REPOSITORY_MATCHES:
-        result = this.evaluateRepositoryMatch(condition as RepositoryCondition, resource.base?.repo);
+        result = this.evaluateRepositoryMatch(condition as RepositoryCondition, resource.base?.repo as RepoInfo);
         break;
       case ConditionType.IS_DRAFT:
         result = resource.draft === (condition as DraftCondition).isDraft;
@@ -111,16 +155,16 @@ export class RuleMatchingService {
         result = false;
         break;
       case ConditionType.DAYS_SINCE_CREATED:
-        result = this.evaluateTimeCondition(condition as TimeCondition, resource.created_at);
+        result = this.evaluateTimeCondition(condition as TimeCondition, resource.created_at ?? '');
         break;
       case ConditionType.DAYS_SINCE_UPDATED:
-        result = this.evaluateTimeCondition(condition as TimeCondition, resource.updated_at);
+        result = this.evaluateTimeCondition(condition as TimeCondition, resource.updated_at ?? '');
         break;
       case ConditionType.DAYS_SINCE_CLOSED:
         result = resource.closed_at ? this.evaluateTimeCondition(condition as TimeCondition, resource.closed_at) : false;
         break;
       default:
-        console.warn(`Unsupported condition type: ${condition.type}`);
+        console.warn(`Unsupported condition type: ${(condition as Record<string, unknown>).type}`);
         result = false;
     }
 
@@ -159,7 +203,7 @@ export class RuleMatchingService {
   /**
    * Evaluate a label match condition
    */
-  private evaluateLabelMatch(condition: LabelCondition, labels: any[]): boolean {
+  private evaluateLabelMatch(condition: LabelCondition, labels: LabelItem[]): boolean {
     if (!labels || !Array.isArray(labels)) return false;
     
     return labels.some(label => label.name === condition.label);
@@ -177,7 +221,7 @@ export class RuleMatchingService {
   /**
    * Evaluate an assignee match condition
    */
-  private evaluateAssigneeMatch(condition: UserCondition, assignees: any[]): boolean {
+  private evaluateAssigneeMatch(condition: UserCondition, assignees: AssigneeItem[]): boolean {
     if (!assignees || !Array.isArray(assignees)) return false;
     
     return assignees.some(assignee => assignee.login === condition.username);
@@ -186,13 +230,13 @@ export class RuleMatchingService {
   /**
    * Evaluate a file path match condition
    */
-  private evaluateFilePathMatch(condition: FilePathCondition, files: any[]): boolean {
+  private evaluateFilePathMatch(condition: FilePathCondition, files: FileItem[]): boolean {
     if (!files || !Array.isArray(files)) return false;
     
     if (condition.isRegex) {
       try {
         const regex = new RegExp(condition.pattern);
-        return files.some(file => regex.test(file.filename));
+        return files.some(file => regex.test(file.filename ?? ''));
       } catch (error) {
         console.error('Invalid regex pattern for file path:', error);
         return false;
@@ -206,7 +250,7 @@ export class RuleMatchingService {
       
       try {
         const regex = new RegExp(`^${pattern}$`);
-        return files.some(file => regex.test(file.filename));
+        return files.some(file => regex.test(file.filename ?? ''));
       } catch (error) {
         console.error('Invalid glob pattern for file path:', error);
         return false;
@@ -236,16 +280,16 @@ export class RuleMatchingService {
   /**
    * Evaluate a repository match condition
    */
-  private evaluateRepositoryMatch(condition: RepositoryCondition, repo: any): boolean {
+  private evaluateRepositoryMatch(condition: RepositoryCondition, repo: RepoInfo): boolean {
     if (!repo) return false;
     
-    return repo.owner.login === condition.owner && repo.name === condition.name;
+    return repo.owner?.login === condition.owner && repo.name === condition.name;
   }
 
   /**
    * Evaluate a review request match condition
    */
-  private evaluateReviewRequestMatch(condition: UserCondition, requestedReviewers: any[]): boolean {
+  private evaluateReviewRequestMatch(condition: UserCondition, requestedReviewers: ReviewerItem[]): boolean {
     if (!requestedReviewers || !Array.isArray(requestedReviewers)) return false;
     
     return requestedReviewers.some(reviewer => reviewer.login === condition.username);
@@ -254,22 +298,22 @@ export class RuleMatchingService {
   /**
    * Evaluate a review state match condition
    */
-  private evaluateReviewStateMatch(condition: ReviewStateCondition, reviews: any[]): boolean {
+  private evaluateReviewStateMatch(condition: ReviewStateCondition, reviews: ReviewItem[]): boolean {
     if (!reviews || !Array.isArray(reviews)) return false;
     
     // Find the latest review from each reviewer
     const latestReviews = new Map();
     for (const review of reviews) {
-      const reviewer = review.user.login;
+      const reviewer = review.user?.login ?? '';
       const existingReview = latestReviews.get(reviewer);
       
-      if (!existingReview || new Date(review.submitted_at) > new Date(existingReview.submitted_at)) {
+      if (!existingReview || new Date(review.submitted_at ?? '') > new Date(existingReview.submitted_at)) {
         latestReviews.set(reviewer, review);
       }
     }
     
     // Check if any of the latest reviews match the desired state
-    return Array.from(latestReviews.values()).some(review => review.state.toLowerCase() === condition.state);
+    return Array.from(latestReviews.values()).some(review => review.state?.toLowerCase() === condition.state);
   }
 
   /**

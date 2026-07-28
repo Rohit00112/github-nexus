@@ -14,7 +14,7 @@ interface Team {
   node_id: string;
   name: string;
   slug: string;
-  description: string;
+  description: string | null;
   privacy: string;
   html_url: string;
   members_url: string;
@@ -24,8 +24,9 @@ interface Team {
 
 export default function OrganizationTeamsPage() {
   const { githubService } = useGitHub();
-  const params = useParams();
-  const router = useRouter();
+  const params = 
+  useParams();
+  const _router = useRouter();
   const orgName = params.org as string;
   
   const [teams, setTeams] = useState<Team[]>([]);
@@ -44,7 +45,7 @@ export default function OrganizationTeamsPage() {
         setError(null);
         
         const teamsData = await githubService.getOrganizationTeams(orgName);
-        setTeams(teamsData);
+        setTeams(teamsData as Team[]);
       } catch (err) {
         console.error("Error fetching teams:", err);
         setError("Failed to load teams. Please try again later.");
@@ -202,7 +203,7 @@ export default function OrganizationTeamsPage() {
                     </label>
                     <select
                       value={chartMetric}
-                      onChange={(e) => setChartMetric(e.target.value as any)}
+                      onChange={(e) => setChartMetric(e.target.value as "commits" | "pullRequests" | "issues" | "reviews")}
                       className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                     >
                       <option value="commits">Commits</option>
@@ -218,7 +219,7 @@ export default function OrganizationTeamsPage() {
                     </label>
                     <select
                       value={chartType}
-                      onChange={(e) => setChartType(e.target.value as any)}
+                      onChange={(e) => setChartType(e.target.value as "bar" | "pie")}
                       className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                     >
                       <option value="bar">Bar Chart</option>

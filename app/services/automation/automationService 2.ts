@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { 
@@ -283,7 +284,7 @@ export class AutomationService {
         break;
       // Add more condition evaluations as needed
       default:
-        console.warn(`Unsupported condition type: ${condition.type}`);
+        console.warn(`Unsupported condition type: ${(condition as any).type}`);
         result = false;
     }
 

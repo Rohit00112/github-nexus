@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import MainLayout from "../../../../../components/layout/MainLayout";
@@ -13,24 +13,16 @@ import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
 import ReactMarkdown from 'react-markdown';
 import RuleExecutor from "../../../../../components/automation/RuleExecutor";
 
-interface IssueDetailPageProps {
-  params: {
-    owner: string;
-    repo: string;
-    issue: string;
-  };
-}
-
-export default function IssueDetailPage({ params }: IssueDetailPageProps) {
-  // Access params safely
-  const ownerName = Array.isArray(params.owner) ? params.owner[0] : params.owner;
-  const repoName = Array.isArray(params.repo) ? params.repo[0] : params.repo;
-  const issueNumber = Array.isArray(params.issue) ? params.issue[0] : params.issue;
+export default function IssueDetailPage() {
+  const params = useParams();
+  const ownerName = params.owner as string;
+  const repoName = params.repo as string;
+  const issueNumber = params.issue as string;
 
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
-  const { rules, isLoading: automationLoading } = useAutomation();
+  const { rules: _rules, isLoading: automationLoading } = useAutomation();
 
   const [issue, setIssue] = useState<GitHubIssue | null>(null);
   const [comments, setComments] = useState<GitHubComment[]>([]);
@@ -53,10 +45,9 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
           setError(null);
 
           const issueData = await githubService.getIssue(ownerName, repoName, parseInt(issueNumber));
-          setIssue(issueData);
-
+          setIssue(issueData as GitHubIssue);
           const commentsData = await githubService.getIssueComments(ownerName, repoName, parseInt(issueNumber));
-          setComments(commentsData);
+          setComments(commentsData as GitHubComment[]);
         } catch (err) {
           console.error("Error fetching issue:", err);
           setError("Failed to fetch issue. Please try again later.");
@@ -97,7 +88,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       );
 
       if (comment) {
-        setComments([...comments, comment]);
+        setComments([...comments, comment as GitHubComment]);
         setNewComment("");
       }
     } catch (err) {
@@ -122,7 +113,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       );
 
       if (updatedIssue) {
-        setIssue(updatedIssue);
+        setIssue(updatedIssue as GitHubIssue);
       }
     } catch (err) {
       console.error("Error closing issue:", err);
@@ -146,7 +137,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       );
 
       if (updatedIssue) {
-        setIssue(updatedIssue);
+        setIssue(updatedIssue as GitHubIssue);
       }
     } catch (err) {
       console.error("Error reopening issue:", err);
@@ -182,7 +173,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
           <h3 className="text-xl font-medium mb-2">Issue not found</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            The issue you're looking for doesn't exist or you don't have permission to view it.
+            The issue you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.
           </p>
           <Link
             href="/issues"

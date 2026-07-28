@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useGitHub } from "../../context/GitHubContext";
+import type { Gist } from "./GistCard";
 
 interface GistFile {
   filename: string;
@@ -11,7 +12,7 @@ interface GistFile {
 interface CreateGistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onGistCreated: (gist: any) => void;
+  onGistCreated: (gist: Gist) => void;
 }
 
 export default function CreateGistModal({ isOpen, onClose, onGistCreated }: CreateGistModalProps) {
@@ -73,7 +74,7 @@ export default function CreateGistModal({ isOpen, onClose, onGistCreated }: Crea
         public: isPublic,
       });
       
-      onGistCreated(gist);
+      onGistCreated(await githubService.getGist(gist.id!) as unknown as Gist);
       onClose();
       
       // Reset form

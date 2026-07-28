@@ -14,31 +14,29 @@ export default function RepositoriesPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
-  
+
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"updated" | "name" | "stars">("updated");
-  
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/auth/signin");
     }
   }, [authLoading, isAuthenticated, router]);
-  
+
   useEffect(() => {
     async function fetchRepositories() {
       if (githubService && !githubLoading) {
         try {
           setIsLoading(true);
           setError(null);
-          
           const user = await githubService.getCurrentUser();
           const repos = await githubService.getUserRepositories(user.login, 1, 100);
-          
-          setRepositories(repos);
+          setRepositories(repos as GitHubRepository[]);
         } catch (err) {
           console.error("Error fetching repositories:", err);
           setError("Failed to fetch repositories. Please try again later.");
@@ -47,23 +45,20 @@ export default function RepositoriesPage() {
         }
       }
     }
-    
     fetchRepositories();
   }, [githubService, githubLoading]);
-  
+
   const handleCreateRepository = async (data: { name: string; description: string; isPrivate: boolean }) => {
     if (githubService) {
       try {
         setIsLoading(true);
-        
         const newRepo = await githubService.createRepository({
           name: data.name,
           description: data.description,
           private: data.isPrivate,
           auto_init: true,
         });
-        
-        setRepositories([newRepo, ...repositories]);
+        setRepositories([newRepo as GitHubRepository, ...repositories]);
         setShowCreateModal(false);
       } catch (err) {
         console.error("Error creating repository:", err);
@@ -73,22 +68,18 @@ export default function RepositoriesPage() {
       }
     }
   };
-  
+
   const filteredRepositories = repositories
-    .filter(repo => 
+    .filter(repo =>
       repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (repo.description && repo.description.toLowerCase().includes(searchQuery.toLowerCase()))
     )
     .sort((a, b) => {
-      if (sortBy === "name") {
-        return a.name.localeCompare(b.name);
-      } else if (sortBy === "stars") {
-        return b.stargazers_count - a.stargazers_count;
-      } else {
-        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-      }
+      if (sortBy === "name") return a.name.localeCompare(b.name);
+      if (sortBy === "stars") return b.stargazers_count - a.stargazers_count;
+      return new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime();
     });
-  
+
   if (authLoading || githubLoading) {
     return (
       <MainLayout>
@@ -98,70 +89,71 @@ export default function RepositoriesPage() {
       </MainLayout>
     );
   }
-  
+
   return (
     <MainLayout>
-      <div className="py-6">
+      <div className="py-2">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Repositories</h1>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Repositories</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage and browse your GitHub repositories</p>
+          </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md flex items-center"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium py-2 px-4 rounded-lg flex items-center text-sm transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
             New Repository
           </button>
         </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+
+        {/* Filters */}
+        <div className="bg-card border border-border rounded-xl p-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-3">
             <div className="flex-1">
               <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
                 <input
                   type="text"
                   placeholder="Find a repository..."
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-2.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
               </div>
             </div>
-            <div>
-              <select
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as "updated" | "name" | "stars")}
-              >
-                <option value="updated">Last updated</option>
-                <option value="name">Name</option>
-                <option value="stars">Stars</option>
-              </select>
-            </div>
+            <select
+              className="px-3 py-2 border border-border rounded-lg bg-background text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "updated" | "name" | "stars")}
+            >
+              <option value="updated">Last updated</option>
+              <option value="name">Name</option>
+              <option value="stars">Stars</option>
+            </select>
           </div>
         </div>
-        
+
+        {/* Content */}
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <LoadingSpinner size="medium" />
           </div>
         ) : error ? (
-          <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-4 rounded-md">
-            {error}
-          </div>
+          <div className="bg-destructive/10 text-destructive p-4 rounded-xl text-sm">{error}</div>
         ) : filteredRepositories.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-            <h3 className="text-xl font-medium mb-2">No repositories found</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <div className="bg-card border border-border rounded-xl p-12 text-center">
+            <h3 className="text-lg font-semibold mb-2">No repositories found</h3>
+            <p className="text-sm text-muted-foreground mb-6">
               {searchQuery ? "No repositories match your search criteria." : "You don't have any repositories yet."}
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium py-2 px-5 rounded-lg text-sm transition-colors"
             >
               Create a new repository
             </button>
@@ -174,7 +166,7 @@ export default function RepositoriesPage() {
           </div>
         )}
       </div>
-      
+
       {showCreateModal && (
         <CreateRepositoryModal
           onClose={() => setShowCreateModal(false)}

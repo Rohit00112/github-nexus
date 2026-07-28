@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { ComponentProps, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import MainLayout from "../../../../components/layout/MainLayout";
@@ -16,7 +16,7 @@ export default function PullRequestReviewPage() {
   
   const { githubService } = useGitHub();
   const [activeTab, setActiveTab] = useState<"conversation" | "files">("conversation");
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<ComponentProps<typeof FileChanges>["files"]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

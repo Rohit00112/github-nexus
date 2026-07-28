@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useGitHub } from "../../context/GitHubContext";
+
 import { useAutomation } from "../../context/AutomationContext";
 import {
   AutomationRule,
@@ -25,8 +25,7 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
-  Input,
-  Spinner
+  Input
 } from "@nextui-org/react";
 import { PlayIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
@@ -36,7 +35,6 @@ interface RuleDetailsProps {
 
 export default function RuleDetails({ rule }: RuleDetailsProps) {
   const { automationService } = useAutomation();
-  const { githubService } = useGitHub();
   const testModal = useDisclosure();
 
   const [repoOwner, setRepoOwner] = useState("");
@@ -423,7 +421,7 @@ function ActionRenderer({ action }: ActionRendererProps) {
       description = `Merge PR using ${action.mergeMethod || 'merge'} method`;
       break;
     default:
-      description = `Action: ${action.type}`;
+      description = `Action: ${(action as { type: string }).type}`;
   }
 
   return <p>{description}</p>;

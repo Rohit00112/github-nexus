@@ -1,30 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import MainLayout from "../../../components/layout/MainLayout";
 import { useAuth } from "../../../hooks/useAuth";
 import { useGitHub } from "../../../context/GitHubContext";
 import { GitHubRepository } from "../../../types/github";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import FileExplorer from "../../../components/repository/FileExplorer";
-import ActivityFeed from "../../../components/repository/ActivityFeed";
 import Contributors from "../../../components/repository/Contributors";
 import RepositoryProjects from "../../../components/repository/RepositoryProjects";
 
-interface RepositoryDetailPageProps {
-  params: {
-    owner: string;
-    repo: string;
-  };
-}
-
-export default function RepositoryDetailPage({ params }: RepositoryDetailPageProps) {
-  // Access params safely
-  const ownerName = Array.isArray(params.owner) ? params.owner[0] : params.owner;
-  const repoName = Array.isArray(params.repo) ? params.repo[0] : params.repo;
+export default function RepositoryDetailPage() {
+  const params = useParams();
+  const ownerName = params.owner as string;
+  const repoName = params.repo as string;
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
@@ -63,7 +54,8 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
   }, [githubService, githubLoading, ownerName, repoName]);
 
   // Format date to a more readable format
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Unknown';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -328,7 +320,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
 
                     <div className="text-center py-8">
                       <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        Issues list is being loaded from the Issues page. Click "View All Issues" to see them.
+                        Issues list is being loaded from the Issues page. Click &quot;View All Issues&quot; to see them.
                       </p>
                     </div>
                   </div>
@@ -364,7 +356,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
 
                     <div className="text-center py-8">
                       <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        Pull requests list is being loaded from the Pull Requests page. Click "View All Pull Requests" to see them.
+                        Pull requests list is being loaded from the Pull Requests page. Click &quot;View All Pull Requests&quot; to see them.
                       </p>
                     </div>
                   </div>
@@ -533,7 +525,7 @@ export default function RepositoryDetailPage({ params }: RepositoryDetailPagePro
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
             <h3 className="text-xl font-medium mb-2">Repository not found</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              The repository you're looking for doesn't exist or you don't have access to it.
+              The repository you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.
             </p>
             <Link
               href="/repositories"

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useGitHub } from "../../context/GitHubContext";
+import type { GitHubService } from "../../services/github/githubService";
+import Image from "next/image";
 import {
   Card,
   CardBody,
@@ -9,10 +11,6 @@ import {
   Button,
   Spinner,
   Chip,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
   Input,
   Modal,
   ModalContent,
@@ -21,7 +19,7 @@ import {
   ModalFooter,
   Textarea
 } from "@nextui-org/react";
-import { PlusIcon, PencilIcon, TrashIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, LinkIcon } from "@heroicons/react/24/outline";
 
 interface ProjectBetaItem {
   id: string;
@@ -68,12 +66,15 @@ interface ProjectBetaBoardProps {
   onItemUpdated: () => void;
 }
 
+type SearchItem = Awaited<ReturnType<GitHubService["searchIssues"]>>[number];
+type Repository = Awaited<ReturnType<GitHubService["getUserRepositories"]>>[number];
+
 export default function ProjectBetaBoard({
   projectId,
   fields,
   items,
   onItemAdded,
-  onItemUpdated
+  onItemUpdated: _onItemUpdated
 }: ProjectBetaBoardProps) {
   const { githubService } = useGitHub();
   const [isLoading, setIsLoading] = useState(false);
@@ -83,9 +84,9 @@ export default function ProjectBetaBoard({
   const [newItemTitle, setNewItemTitle] = useState("");
   const [newItemBody, setNewItemBody] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
-  const [repositories, setRepositories] = useState<any[]>([]);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
   const [activeTab, setActiveTab] = useState("issues");
 
   // Get status field if it exists
@@ -165,10 +166,10 @@ export default function ProjectBetaBoard({
       
       if (activeTab === "issues") {
         const issues = await githubService.searchIssues(searchQuery, owner, repo);
-        setSearchResults(issues.filter((issue: any) => !issue.pull_request));
+        setSearchResults(issues.filter((issue) => !issue.pull_request));
       } else {
         const pullRequests = await githubService.searchIssues(searchQuery, owner, repo);
-        setSearchResults(pullRequests.filter((issue: any) => issue.pull_request));
+        setSearchResults(pullRequests.filter((issue) => issue.pull_request));
       }
     } catch (error) {
       console.error("Error searching items:", error);
@@ -204,7 +205,7 @@ export default function ProjectBetaBoard({
   };
 
   // Handle linking an item to the project
-  const handleLinkItem = async (item: any) => {
+  const handleLinkItem = async (item: SearchItem) => {
     if (!githubService) return;
     
     try {
@@ -439,13 +440,16 @@ export default function ProjectBetaBoard({
                                   </div>
                                   <h4 className="text-sm font-medium">{item.title}</h4>
                                 </div>
-                                <div className="ml-2">
-                                  <img
+                                {item.user && <div className="ml-2">
+                                  <Image
                                     src={item.user.avatar_url}
                                     alt={item.user.login}
                                     className="w-6 h-6 rounded-full"
+                                    unoptimized
+                                    width={24}
+                                    height={24}
                                   />
-                                </div>
+                                </div>}
                               </div>
                             </CardBody>
                           </Card>

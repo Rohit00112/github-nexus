@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import MainLayout from "../../../components/layout/MainLayout";
 import { useGitHub } from "../../../context/GitHubContext";
+import { GitHubRepository } from "../../../types/github";
 import Link from "next/link";
 import TeamMembersList from "../../../components/team/TeamMembersList";
 import TeamContributionChart from "../../../components/team/TeamContributionChart";
@@ -14,7 +15,7 @@ interface TeamDetails {
   node_id: string;
   name: string;
   slug: string;
-  description: string;
+  description: string | null;
   privacy: string;
   html_url: string;
   members_url: string;
@@ -27,10 +28,10 @@ interface Repository {
   name: string;
   full_name: string;
   html_url: string;
-  description: string;
+  description: string | null;
   private: boolean;
   fork: boolean;
-  language: string;
+  language: string | null;
   stargazers_count: number;
   watchers_count: number;
   forks_count: number;
@@ -40,7 +41,7 @@ interface Repository {
 export default function TeamPage() {
   const { githubService } = useGitHub();
   const params = useParams();
-  const router = useRouter();
+  const _router = useRouter();
   const orgName = params.org as string;
   const teamSlug = params.team as string;
   
@@ -62,11 +63,11 @@ export default function TeamPage() {
         
         // Fetch team details
         const team = await githubService.getTeam(orgName, teamSlug);
-        setTeamDetails(team);
+        setTeamDetails(team as TeamDetails);
         
         // Fetch team repositories
         const repos = await githubService.getTeamRepositories(orgName, teamSlug);
-        setRepositories(repos);
+        setRepositories(repos as GitHubRepository[]);
       } catch (err) {
         console.error("Error fetching team details:", err);
         setError("Failed to load team details. Please try again later.");
@@ -310,7 +311,7 @@ export default function TeamPage() {
                         </label>
                         <select
                           value={chartMetric}
-                          onChange={(e) => setChartMetric(e.target.value as any)}
+                          onChange={(e) => setChartMetric(e.target.value as "commits" | "pullRequests" | "issues" | "reviews")}
                           className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                         >
                           <option value="commits">Commits</option>
@@ -326,7 +327,7 @@ export default function TeamPage() {
                         </label>
                         <select
                           value={chartType}
-                          onChange={(e) => setChartType(e.target.value as any)}
+                          onChange={(e) => setChartType(e.target.value as "bar" | "pie")}
                           className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                         >
                           <option value="bar">Bar Chart</option>

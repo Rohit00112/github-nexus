@@ -22,6 +22,32 @@ export interface AuthCredentials {
   clientSecret?: string;
 }
 
+interface PATValidationResult {
+  user: {
+    id: number;
+    login: string;
+    name: string | null;
+    email: string | null;
+    avatar_url: string;
+  };
+  token: string;
+  method: AuthMethod;
+}
+
+interface AppValidationResult {
+  user: {
+    id: number;
+    login: string;
+    name: string | null;
+    email: string | null;
+    avatar_url: string;
+  };
+  appId: string;
+  installationId: string;
+  token: string;
+  method: AuthMethod;
+}
+
 /**
  * Authentication service for handling different authentication methods
  */
@@ -33,7 +59,7 @@ export class AuthService {
    * @returns User information if token is valid
    * @throws Error if token is invalid
    */
-  static async validatePersonalAccessToken(token: string): Promise<any> {
+  static async validatePersonalAccessToken(token: string): Promise<PATValidationResult> {
     try {
       const octokit = new Octokit({
         auth: token,
@@ -41,7 +67,13 @@ export class AuthService {
       
       const { data } = await octokit.rest.users.getAuthenticated();
       return {
-        user: data,
+        user: {
+          id: data.id,
+          login: data.login,
+          name: data.name,
+          email: data.email,
+          avatar_url: data.avatar_url,
+        },
         token,
         method: AuthMethod.PERSONAL_ACCESS_TOKEN,
       };
@@ -64,7 +96,7 @@ export class AuthService {
     appId: string,
     privateKey: string,
     installationId: string
-  ): Promise<any> {
+  ): Promise<AppValidationResult> {
     try {
       // This is a simplified version. In a real implementation, you would:
       // 1. Create a JWT using the App ID and private key
@@ -80,10 +112,17 @@ export class AuthService {
       // by making an API call to GitHub
       
       return {
+        user: {
+          id: 0,
+          login: "",
+          name: null,
+          email: null,
+          avatar_url: "",
+        },
         appId,
         installationId,
         method: AuthMethod.GITHUB_APP,
-        // In a real implementation, you would return the installation token
+        token: "",
       };
     } catch (error) {
       console.error("Error validating GitHub App credentials:", error);

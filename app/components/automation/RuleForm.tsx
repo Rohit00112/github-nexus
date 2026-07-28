@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useAutomation } from "../../context/AutomationContext";
 import { useGitHub } from "../../context/GitHubContext";
 import {
-  AutomationRule,
   AutomationResourceType,
   ConditionGroup,
   ConditionOperator,
@@ -41,7 +40,7 @@ interface RuleFormProps {
 
 export default function RuleForm({ ruleId, onCancel, onSuccess, templateType }: RuleFormProps) {
   const { rules, createRule, updateRule } = useAutomation();
-  const { githubService, isLoading: isGitHubLoading } = useGitHub();
+  const { githubService } = useGitHub();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [resourceType, setResourceType] = useState<AutomationResourceType>(AutomationResourceType.BOTH);
@@ -66,7 +65,7 @@ export default function RuleForm({ ruleId, onCancel, onSuccess, templateType }: 
           setIsLoadingRepos(true);
           const user = await githubService.getCurrentUser();
           const repos = await githubService.getUserRepositories(user.login, 1, 100);
-          setAvailableRepositories(repos);
+          setAvailableRepositories(repos as GitHubRepository[]);
         } catch (error) {
           console.error("Error fetching repositories:", error);
         } finally {

@@ -10,10 +10,17 @@ interface RepositoryProjectsProps {
   repo: string;
 }
 
+interface ClassicProject {
+  id: number;
+  name: string;
+  body?: string | null;
+  created_at: string;
+  state: string;
+}
+
 const RepositoryProjects: FC<RepositoryProjectsProps> = ({ owner, repo }) => {
   const { githubService } = useGitHub();
-  const [classicProjects, setClassicProjects] = useState<any[]>([]);
-  const [betaProjects, setBetaProjects] = useState<any[]>([]);
+  const [classicProjects, setClassicProjects] = useState<ClassicProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'classic' | 'beta'>('classic');
@@ -29,12 +36,12 @@ const RepositoryProjects: FC<RepositoryProjectsProps> = ({ owner, repo }) => {
         
         // Fetch classic projects
         const classicProjectsData = await githubService.getRepositoryProjects(owner, repo);
-        setClassicProjects(classicProjectsData);
+        setClassicProjects(classicProjectsData as unknown as ClassicProject[]);
         
         // Fetch beta projects (ProjectsV2)
         // Note: This is a bit more complex as we need to find projects that are linked to this repository
         // For now, we'll just show a placeholder for beta projects
-        setBetaProjects([]);
+
       } catch (err) {
         console.error("Error fetching repository projects:", err);
         setError("Failed to load repository projects. Please try again later.");
@@ -139,7 +146,7 @@ const RepositoryProjects: FC<RepositoryProjectsProps> = ({ owner, repo }) => {
               </svg>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Projects Found</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                This repository doesn't have any classic projects yet.
+                This repository doesn&apos;t have any classic projects yet.
               </p>
               <a
                 href={`https://github.com/${owner}/${repo}/projects/new`}

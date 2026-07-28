@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { 
@@ -120,7 +121,7 @@ export class RuleMatchingService {
         result = resource.closed_at ? this.evaluateTimeCondition(condition as TimeCondition, resource.closed_at) : false;
         break;
       default:
-        console.warn(`Unsupported condition type: ${condition.type}`);
+        console.warn(`Unsupported condition type: ${(condition as any).type}`);
         result = false;
     }
 

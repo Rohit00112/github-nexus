@@ -1,6 +1,7 @@
 "use client";
 
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import Image from "next/image";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,13 +11,13 @@ import {
   Tooltip,
   Legend,
   ArcElement,
+  TooltipItem,
 } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 import { useGitHub } from '../../context/GitHubContext';
 import { animateChartData } from '../../utils/animations';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -57,39 +58,27 @@ const ContributionChart: FC<ContributionChartProps> = ({
   const [contributions, setContributions] = useState<ContributionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const chartRef = useRef<any>(null);
+  const barChartRef = useRef<ChartJS<"bar", number[], string> | null>(null);
+  const pieChartRef = useRef<ChartJS<"pie", number[], string> | null>(null);
 
-  const fetchContributions = async () => {
+  const fetchContributions = useCallback(async () => {
     if (!githubService) return;
 
     try {
       setIsLoading(true);
       setError(null);
 
-      // Get user's repositories
       const user = await githubService.getCurrentUser();
       const repos = await githubService.getUserRepositories(user.login, 1, 10);
 
-      // Create a map to store contribution data
       const contributionsMap = new Map<string, ContributionData>();
 
-      // Add current user to the map with default values
       contributionsMap.set(user.login, {
-        user: {
-          login: user.login,
-          avatar_url: user.avatar_url
-        },
-        contributions: {
-          commits: 0,
-          pullRequests: 0,
-          issues: 0,
-          reviews: 0
-        }
+        user: { login: user.login, avatar_url: user.avatar_url },
+        contributions: { commits: 0, pullRequests: 0, issues: 0, reviews: 0 }
       });
 
-      // Add some sample data for demonstration if no repos are found
       if (repos.length === 0) {
-        // Add sample contributors
         const sampleContributors = [
           { login: user.login, avatar_url: user.avatar_url, commits: 42, prs: 12, issues: 8, reviews: 15 },
           { login: 'octocat', avatar_url: 'https://avatars.githubusercontent.com/u/583231?v=4', commits: 28, prs: 8, issues: 5, reviews: 10 },
@@ -99,100 +88,54 @@ const ContributionChart: FC<ContributionChartProps> = ({
 
         sampleContributors.forEach(contributor => {
           contributionsMap.set(contributor.login, {
-            user: {
-              login: contributor.login,
-              avatar_url: contributor.avatar_url
-            },
-            contributions: {
-              commits: contributor.commits,
-              pullRequests: contributor.prs,
-              issues: contributor.issues,
-              reviews: contributor.reviews
-            }
+            user: { login: contributor.login, avatar_url: contributor.avatar_url },
+            contributions: { commits: contributor.commits, pullRequests: contributor.prs, issues: contributor.issues, reviews: contributor.reviews }
           });
         });
       } else {
-        // Process real repository data
         await Promise.all(
-          repos.map(async (repo: any) => {
+          repos.map(async (repo) => {
             try {
-              // Get repository contributors
               const repoContributors = await githubService.getRepositoryContributors(repo.owner.login, repo.name);
-
-              repoContributors.forEach((contributor: any) => {
+              repoContributors.forEach((contributor) => {
+                if (!contributor.login) return;
                 const login = contributor.login;
-
                 if (!contributionsMap.has(login)) {
                   contributionsMap.set(login, {
-                    user: {
-                      login,
-                      avatar_url: contributor.avatar_url
-                    },
-                    contributions: {
-                      commits: 0,
-                      pullRequests: 0,
-                      issues: 0,
-                      reviews: 0
-                    }
+                    user: { login, avatar_url: contributor.avatar_url ?? "" },
+                    contributions: { commits: 0, pullRequests: 0, issues: 0, reviews: 0 }
                   });
                 }
-
                 const userData = contributionsMap.get(login)!;
                 userData.contributions.commits += contributor.contributions;
                 contributionsMap.set(login, userData);
               });
 
-              // Get pull requests
               const pulls = await githubService.getPullRequests(repo.owner.login, repo.name, 1, 100);
-
-              pulls.forEach((pr: any) => {
+              pulls.forEach((pr) => {
                 if (!pr.user) return;
                 const login = pr.user.login;
-
                 if (!contributionsMap.has(login)) {
                   contributionsMap.set(login, {
-                    user: {
-                      login,
-                      avatar_url: pr.user.avatar_url
-                    },
-                    contributions: {
-                      commits: 0,
-                      pullRequests: 0,
-                      issues: 0,
-                      reviews: 0
-                    }
+                    user: { login, avatar_url: pr.user.avatar_url },
+                    contributions: { commits: 0, pullRequests: 0, issues: 0, reviews: 0 }
                   });
                 }
-
                 const userData = contributionsMap.get(login)!;
                 userData.contributions.pullRequests += 1;
                 contributionsMap.set(login, userData);
               });
 
-              // Get issues
               const issues = await githubService.getIssues(repo.owner.login, repo.name, 1, 100);
-
-              issues.forEach((issue: any) => {
-                // Skip pull requests (they are also returned as issues)
+              issues.forEach((issue) => {
                 if (issue.pull_request || !issue.user) return;
-
                 const login = issue.user.login;
-
                 if (!contributionsMap.has(login)) {
                   contributionsMap.set(login, {
-                    user: {
-                      login,
-                      avatar_url: issue.user.avatar_url
-                    },
-                    contributions: {
-                      commits: 0,
-                      pullRequests: 0,
-                      issues: 0,
-                      reviews: 0
-                    }
+                    user: { login, avatar_url: issue.user.avatar_url },
+                    contributions: { commits: 0, pullRequests: 0, issues: 0, reviews: 0 }
                   });
                 }
-
                 const userData = contributionsMap.get(login)!;
                 userData.contributions.issues += 1;
                 contributionsMap.set(login, userData);
@@ -204,7 +147,6 @@ const ContributionChart: FC<ContributionChartProps> = ({
         );
       }
 
-      // Convert map to array and sort by selected metric
       const contributionsArray = Array.from(contributionsMap.values())
         .sort((a, b) => b.contributions[metric] - a.contributions[metric])
         .slice(0, limit);
@@ -216,20 +158,21 @@ const ContributionChart: FC<ContributionChartProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [githubService, metric, limit]);
 
   useEffect(() => {
     fetchContributions();
-  }, [githubService, metric, limit]);
+  }, [githubService, metric, limit, fetchContributions]);
 
-  // Animate chart when data is loaded
   useEffect(() => {
-    if (!isLoading && contributions.length > 0 && chartRef.current) {
-      setTimeout(() => {
-        animateChartData(chartRef.current);
+    const chart = chartType === "bar" ? barChartRef.current : pieChartRef.current;
+    if (!isLoading && contributions.length > 0 && chart) {
+      const timeout = window.setTimeout(() => {
+        animateChartData(chart);
       }, animationDelay);
+      return () => window.clearTimeout(timeout);
     }
-  }, [isLoading, contributions, animationDelay]);
+  }, [isLoading, contributions, animationDelay, chartType]);
 
   if (isLoading) {
     return (
@@ -241,49 +184,15 @@ const ContributionChart: FC<ContributionChartProps> = ({
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-        <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-4 rounded-md flex items-center justify-between">
-          <div>{error}</div>
+      <div className="bg-card border border-border rounded-xl shadow-sm p-6">
+        <div className="bg-destructive/10 text-destructive p-4 rounded-lg flex items-center justify-between">
+          <div className="text-sm">{error}</div>
           <button
             onClick={() => fetchContributions()}
-            className="px-3 py-1 bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 rounded-md text-sm hover:bg-red-300 dark:hover:bg-red-700 transition-colors"
+            className="px-3 py-1 bg-muted hover:bg-accent text-muted-foreground rounded-lg text-sm transition-colors"
           >
             Retry
           </button>
-        </div>
-
-        {/* Show sample data even when there's an error */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Here's what the contribution chart would look like with sample data:</p>
-
-          <div className="flex flex-col space-y-4 max-w-md mx-auto">
-            {[
-              { name: 'You', count: 42, color: 'bg-blue-500' },
-              { name: 'octocat', count: 28, color: 'bg-purple-500' },
-              { name: 'github-actions', count: 15, color: 'bg-green-500' },
-              { name: 'dependabot', count: 8, color: 'bg-yellow-500' }
-            ].map((item, index) => (
-              <div key={index} className="flex items-center">
-                <div className="w-8 h-8 rounded-full overflow-hidden mr-3 flex-shrink-0 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                  <span className="text-xs font-medium">{item.name.charAt(0).toUpperCase()}</span>
-                </div>
-                <div className="flex-grow">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-gray-800 dark:text-gray-200">{item.name}</span>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      {item.count} commits
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                    <div
-                      className={`h-2.5 rounded-full ${item.color}`}
-                      style={{ width: `${Math.min(100, (item.count / 42) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     );
@@ -291,15 +200,15 @@ const ContributionChart: FC<ContributionChartProps> = ({
 
   if (contributions.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <div className="bg-card border border-border rounded-xl shadow-sm p-6">
+        <div className="text-center py-8 text-muted-foreground">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
           </svg>
-          <p className="mb-4">No contribution data available</p>
+          <p className="text-sm mb-3">No contribution data available</p>
           <button
             onClick={() => fetchContributions()}
-            className="px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md text-sm hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+            className="px-4 py-2 bg-muted hover:bg-accent text-muted-foreground rounded-lg text-sm transition-colors"
           >
             Refresh Data
           </button>
@@ -308,28 +217,30 @@ const ContributionChart: FC<ContributionChartProps> = ({
     );
   }
 
-  // Prepare chart data
   const labels = contributions.map(item => item.user.login);
   const data = contributions.map(item => item.contributions[metric]);
 
-  // If no data, add a placeholder
   if (labels.length === 0) {
     labels.push('No data');
     data.push(0);
   }
 
-  // Generate colors for each contributor
   const generateColors = (count: number) => {
+    const baseColors = [
+      'hsl(217, 91%, 60%)',
+      'hsl(262, 83%, 60%)',
+      'hsl(142, 71%, 45%)',
+      'hsl(38, 92%, 50%)',
+      'hsl(330, 81%, 60%)',
+      'hsl(187, 94%, 43%)',
+      'hsl(25, 95%, 53%)',
+      'hsl(0, 84%, 60%)',
+      'hsl(300, 76%, 48%)',
+      'hsl(160, 84%, 39%)',
+    ];
     const colors = [];
-    const baseHues = [210, 330, 120, 25, 270, 180, 60, 0, 310, 160]; // Predefined hues for better color distribution
-
     for (let i = 0; i < count; i++) {
-      // Use predefined hues for first 10 items, then use golden angle for the rest
-      const hue = i < baseHues.length
-        ? baseHues[i]
-        : (i * 137.5) % 360; // Golden angle approximation
-
-      colors.push(`hsl(${hue}, 70%, 60%)`);
+      colors.push(i < baseColors.length ? baseColors[i] : `hsl(${(i * 137.5) % 360}, 70%, 55%)`);
     }
     return colors;
   };
@@ -338,47 +249,22 @@ const ContributionChart: FC<ContributionChartProps> = ({
 
   const chartData = {
     labels,
-    datasets: [
-      {
-        label: metric === "commits"
-          ? "Commits"
-          : metric === "pullRequests"
-          ? "Pull Requests"
-          : metric === "issues"
-          ? "Issues"
-          : "Reviews",
-        data,
-        backgroundColor,
-        borderColor: backgroundColor.map(color => color.replace("60%", "70%")),
-        borderWidth: 1,
-      },
-    ],
+    datasets: [{
+      label: metric === "commits" ? "Commits" : metric === "pullRequests" ? "Pull Requests" : metric === "issues" ? "Issues" : "Reviews",
+      data,
+      backgroundColor,
+      borderColor: backgroundColor.map(color => color.replace("60%", "70%").replace("55%", "65%")),
+      borderWidth: 1,
+    }],
   };
 
   const barOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: true,
-        text: `User ${
-          metric === "commits"
-            ? "Commits"
-            : metric === "pullRequests"
-            ? "Pull Requests"
-            : metric === "issues"
-            ? "Issues"
-            : "Reviews"
-        }`,
-      },
-    },
+    plugins: { legend: { display: false }, title: { display: false } },
     scales: {
-      y: {
-        beginAtZero: true,
-      },
+      y: { beginAtZero: true, ticks: { color: 'rgb(161, 161, 170)' }, grid: { color: 'rgba(161, 161, 170, 0.1)' } },
+      x: { ticks: { color: 'rgb(161, 161, 170)' }, grid: { display: false } },
     },
   };
 
@@ -386,27 +272,14 @@ const ContributionChart: FC<ContributionChartProps> = ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'right' as const,
-      },
-      title: {
-        display: true,
-        text: `User ${
-          metric === "commits"
-            ? "Commits"
-            : metric === "pullRequests"
-            ? "Pull Requests"
-            : metric === "issues"
-            ? "Issues"
-            : "Reviews"
-        } Distribution`,
-      },
+      legend: { display: false },
+      title: { display: false },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<"pie">) {
             const label = context.label || "";
-            const value = context.raw || 0;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const value = Number(context.raw) || 0;
+            const total = context.dataset.data.reduce((sum, item) => sum + Number(item), 0);
             const percentage = Math.round((value / total) * 100);
             return `${label}: ${value} (${percentage}%)`;
           }
@@ -416,135 +289,57 @@ const ContributionChart: FC<ContributionChartProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-      {/* GitHub-style contribution stats */}
+    <div className="bg-card border border-border rounded-xl shadow-sm p-6">
       <div className="mb-4">
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-3">
           {contributions.map((contributor, index) => (
-            <div key={contributor.user.login} className="flex items-center">
-              <div className="w-8 h-8 rounded-full overflow-hidden mr-3 flex-shrink-0">
-                <img
+            <div key={contributor.user.login} className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 bg-muted">
+                <Image
                   src={contributor.user.avatar_url || `https://avatars.githubusercontent.com/u/0?v=4`}
                   alt={contributor.user.login}
                   className="w-full h-full object-cover"
+                  unoptimized
+                  width={28}
+                  height={28}
                 />
               </div>
-              <div className="flex-grow">
+              <div className="flex-grow min-w-0">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-medium text-gray-800 dark:text-gray-200">{contributor.user.login}</span>
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    {contributor.contributions[metric]} {metric === "commits" ? "commits" :
-                      metric === "pullRequests" ? "PRs" :
-                      metric === "issues" ? "issues" : "reviews"}
+                  <span className="text-sm font-medium text-foreground truncate">{contributor.user.login}</span>
+                  <span className="text-xs font-mono text-muted-foreground flex-shrink-0">
+                    {contributor.contributions[metric]} {metric === "commits" ? "commits" : metric === "pullRequests" ? "PRs" : metric === "issues" ? "issues" : "reviews"}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div className="w-full bg-muted rounded-full h-1.5">
                   <div
-                    className={`h-2.5 rounded-full ${
+                    className={`h-1.5 rounded-full transition-all duration-500 ${
                       index % 5 === 0 ? "bg-blue-500" :
                       index % 5 === 1 ? "bg-purple-500" :
                       index % 5 === 2 ? "bg-green-500" :
                       index % 5 === 3 ? "bg-yellow-500" :
                       "bg-red-500"
                     }`}
-                    style={{
-                      width: `${Math.min(100, (contributor.contributions[metric] /
-                        (contributions[0]?.contributions[metric] || 1)) * 100)}%`
-                    }}
-                  ></div>
+                    style={{ width: `${Math.min(100, (contributor.contributions[metric] / (contributions[0]?.contributions[metric] || 1)) * 100)}%` }}
+                  />
                 </div>
               </div>
             </div>
           ))}
-
-          {contributions.length === 0 && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p>No contribution data available</p>
-              <button
-                onClick={() => fetchContributions()}
-                className="mt-3 px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md text-sm hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-              >
-                Refresh Data
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Chart visualization */}
       {contributions.length > 0 && (
         <div className="mt-6">
           <div className="h-[250px] w-full flex items-center justify-center">
             {chartType === 'bar' ? (
-              <Bar
-                ref={chartRef}
-                data={chartData}
-                options={{
-                  ...barOptions,
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    ...barOptions.plugins,
-                    legend: {
-                      display: false
-                    },
-                    title: {
-                      display: false
-                    }
-                  },
-                  scales: {
-                    y: {
-                      ...barOptions.scales.y,
-                      ticks: {
-                        color: 'rgb(156, 163, 175)'
-                      },
-                      grid: {
-                        color: 'rgba(156, 163, 175, 0.1)'
-                      }
-                    },
-                    x: {
-                      ticks: {
-                        color: 'rgb(156, 163, 175)'
-                      },
-                      grid: {
-                        display: false
-                      }
-                    }
-                  }
-                }}
-              />
+              <Bar ref={barChartRef} data={chartData} options={barOptions} />
             ) : (
-              <Pie
-                ref={chartRef}
-                data={chartData}
-                options={{
-                  ...pieOptions,
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    ...pieOptions.plugins,
-                    legend: {
-                      display: false
-                    },
-                    title: {
-                      display: false
-                    }
-                  }
-                }}
-              />
+              <Pie ref={pieChartRef} data={chartData} options={pieOptions} />
             )}
           </div>
-          <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            {metric === "commits"
-              ? "User Commits Distribution"
-              : metric === "pullRequests"
-              ? "User Pull Requests Distribution"
-              : metric === "issues"
-              ? "User Issues Distribution"
-              : "User Reviews Distribution"}
+          <div className="mt-4 text-center text-xs text-muted-foreground">
+            {metric === "commits" ? "Commits" : metric === "pullRequests" ? "Pull Requests" : metric === "issues" ? "Issues" : "Reviews"} Distribution
           </div>
         </div>
       )}

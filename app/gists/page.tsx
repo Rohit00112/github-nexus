@@ -5,6 +5,7 @@ import { useGitHub } from "../context/GitHubContext";
 import MainLayout from "../components/layout/MainLayout";
 import GistCard, { Gist } from "../components/gists/GistCard";
 import CreateGistModal from "../components/gists/CreateGistModal";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 export default function GistsPage() {
   const { githubService, isLoading: githubLoading } = useGitHub();
@@ -14,16 +15,13 @@ export default function GistsPage() {
   const [activeTab, setActiveTab] = useState<"your" | "starred" | "public">("your");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Fetch gists based on active tab
   useEffect(() => {
     async function fetchGists() {
       if (githubService && !githubLoading) {
         try {
           setIsLoading(true);
           setError(null);
-          
           let gistsData: Gist[] = [];
-          
           switch (activeTab) {
             case "your":
               gistsData = await githubService.getGists(1, 100);
@@ -35,7 +33,6 @@ export default function GistsPage() {
               gistsData = await githubService.getPublicGists(1, 100);
               break;
           }
-          
           setGists(gistsData);
         } catch (err) {
           console.error("Error fetching gists:", err);
@@ -45,87 +42,69 @@ export default function GistsPage() {
         }
       }
     }
-    
     fetchGists();
   }, [githubService, githubLoading, activeTab]);
 
-  // Handle gist creation
   const handleGistCreated = (newGist: Gist) => {
-    if (activeTab === "your") {
-      setGists([newGist, ...gists]);
-    }
+    if (activeTab === "your") setGists([newGist, ...gists]);
   };
 
-  // Handle gist deletion
   const handleGistDeleted = (gistId: string) => {
     setGists(gists.filter(gist => gist.id !== gistId));
   };
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-6">
+      <div className="py-2">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">GitHub Gists</h1>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">GitHub Gists</h1>
+            <p className="text-sm text-muted-foreground mt-1">Create and manage code snippets</p>
+          </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium py-2 px-4 rounded-lg flex items-center text-sm transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
             Create Gist
           </button>
         </div>
 
+        {/* Tabs */}
         <div className="mb-6">
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="flex space-x-8">
+          <div className="flex border-b border-border">
+            {[
+              { key: "your" as const, label: "Your Gists" },
+              { key: "starred" as const, label: "Starred" },
+              { key: "public" as const, label: "Public" },
+            ].map((tab) => (
               <button
-                onClick={() => setActiveTab("your")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "your"
-                    ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`py-2.5 px-4 font-medium text-sm transition-colors ${
+                  activeTab === tab.key
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Your Gists
+                {tab.label}
               </button>
-              <button
-                onClick={() => setActiveTab("starred")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "starred"
-                    ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                }`}
-              >
-                Starred
-              </button>
-              <button
-                onClick={() => setActiveTab("public")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "public"
-                    ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                }`}
-              >
-                Public
-              </button>
-            </nav>
+            ))}
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-4 rounded-md mb-6">
-            {error}
-          </div>
+          <div className="bg-destructive/10 text-destructive p-4 rounded-xl text-sm mb-6">{error}</div>
         )}
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <LoadingSpinner size="medium" />
           </div>
         ) : gists.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 gap-4">
             {gists.map(gist => (
               <GistCard
                 key={gist.id}
@@ -135,12 +114,12 @@ export default function GistsPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <div className="bg-card border border-border rounded-xl p-12 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-muted-foreground/40 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No gists found</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
+            <h3 className="text-lg font-semibold mb-2">No gists found</h3>
+            <p className="text-sm text-muted-foreground mb-6">
               {activeTab === "your"
                 ? "You haven't created any gists yet."
                 : activeTab === "starred"
@@ -150,7 +129,7 @@ export default function GistsPage() {
             {activeTab === "your" && (
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium py-2 px-5 rounded-lg text-sm transition-colors"
               >
                 Create your first gist
               </button>

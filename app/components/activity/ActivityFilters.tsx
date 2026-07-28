@@ -7,10 +7,7 @@ import {
   DropdownMenu, 
   DropdownItem, 
   Button, 
-  Chip, 
-  CheckboxGroup, 
-  Checkbox,
-  Divider
+  Chip
 } from '@nextui-org/react';
 
 export interface ActivityFilters {

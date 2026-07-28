@@ -18,8 +18,7 @@ import {
   Select, 
   SelectItem, 
   Input, 
-  Switch, 
-  Textarea,
+  Switch,
   RadioGroup,
   Radio
 } from "@nextui-org/react";

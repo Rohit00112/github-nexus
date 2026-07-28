@@ -21,24 +21,14 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
+    <div className="flex flex-col min-h-screen bg-background">
+      <Header onToggleSidebar={toggleSidebar} />
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 pt-14">
         <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
-        <main className="flex-1 p-4 md:p-6 bg-gray-100 dark:bg-gray-900">
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden fixed bottom-4 right-4 z-30 bg-blue-600 text-white p-3 rounded-full shadow-lg"
-            onClick={toggleSidebar}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-
-          <div className="container mx-auto">
+        <main className="flex-1 min-w-0">
+          <div className="max-w-[1400px] mx-auto px-4 py-6 md:px-6 md:py-8">
             {children}
           </div>
         </main>

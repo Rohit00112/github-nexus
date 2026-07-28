@@ -10,11 +10,9 @@ import CreateDiscussionModal from "../../../../components/discussions/CreateDisc
 import {
   Card,
   CardBody,
-  CardHeader,
   Button,
   Spinner
 } from "@nextui-org/react";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 export default function DiscussionsPage() {
   const params = useParams();

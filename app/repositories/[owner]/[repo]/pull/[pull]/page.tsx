@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import MainLayout from "../../../../../components/layout/MainLayout";
@@ -13,24 +13,16 @@ import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
 import ReactMarkdown from 'react-markdown';
 import RuleExecutor from "../../../../../components/automation/RuleExecutor";
 
-interface PullRequestDetailPageProps {
-  params: {
-    owner: string;
-    repo: string;
-    pull: string;
-  };
-}
-
-export default function PullRequestDetailPage({ params }: PullRequestDetailPageProps) {
-  // Access params safely
-  const ownerName = Array.isArray(params.owner) ? params.owner[0] : params.owner;
-  const repoName = Array.isArray(params.repo) ? params.repo[0] : params.repo;
-  const pullNumber = Array.isArray(params.pull) ? params.pull[0] : params.pull;
+export default function PullRequestDetailPage() {
+  const params = useParams();
+  const ownerName = params.owner as string;
+  const repoName = params.repo as string;
+  const pullNumber = params.pull as string;
 
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { githubService, isLoading: githubLoading } = useGitHub();
-  const { rules, isLoading: automationLoading } = useAutomation();
+  const { rules: _rules, isLoading: automationLoading } = useAutomation();
 
   const [pullRequest, setPullRequest] = useState<GitHubPullRequest | null>(null);
   const [comments, setComments] = useState<GitHubComment[]>([]);
@@ -53,10 +45,10 @@ export default function PullRequestDetailPage({ params }: PullRequestDetailPageP
           setError(null);
 
           const prData = await githubService.getPullRequest(ownerName, repoName, parseInt(pullNumber));
-          setPullRequest(prData);
+          setPullRequest(prData as GitHubPullRequest);
 
           const commentsData = await githubService.getPullRequestComments(ownerName, repoName, parseInt(pullNumber));
-          setComments(commentsData);
+          setComments(commentsData as GitHubComment[]);
         } catch (err) {
           console.error("Error fetching pull request:", err);
           setError("Failed to fetch pull request. Please try again later.");
@@ -97,7 +89,7 @@ export default function PullRequestDetailPage({ params }: PullRequestDetailPageP
       );
 
       if (comment) {
-        setComments([...comments, comment]);
+        setComments([...comments, comment as GitHubComment]);
         setNewComment("");
       }
     } catch (err) {
@@ -126,7 +118,7 @@ export default function PullRequestDetailPage({ params }: PullRequestDetailPageP
         // Refresh the pull request data
         const prData = await githubService?.getPullRequest(ownerName, repoName, parseInt(pullNumber));
         if (prData) {
-          setPullRequest(prData);
+          setPullRequest(prData as GitHubPullRequest);
         }
       }
     } catch (err) {
@@ -151,7 +143,7 @@ export default function PullRequestDetailPage({ params }: PullRequestDetailPageP
       );
 
       if (updatedPR) {
-        setPullRequest(updatedPR);
+        setPullRequest(updatedPR as GitHubPullRequest);
       }
     } catch (err) {
       console.error("Error closing pull request:", err);
@@ -175,7 +167,7 @@ export default function PullRequestDetailPage({ params }: PullRequestDetailPageP
       );
 
       if (updatedPR) {
-        setPullRequest(updatedPR);
+        setPullRequest(updatedPR as GitHubPullRequest);
       }
     } catch (err) {
       console.error("Error reopening pull request:", err);
@@ -247,7 +239,7 @@ export default function PullRequestDetailPage({ params }: PullRequestDetailPageP
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
           <h3 className="text-xl font-medium mb-2">Pull request not found</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            The pull request you're looking for doesn't exist or you don't have permission to view it.
+            The pull request you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.
           </p>
           <Link
             href="/pull-requests"

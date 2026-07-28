@@ -4,8 +4,8 @@ import '@testing-library/jest-dom';
 import ProjectBoard from '../../app/components/projects/ProjectBoard';
 import { GitHubContext } from '../../app/context/GitHubContext';
 
-// Mock the react-beautiful-dnd
-jest.mock('react-beautiful-dnd', () => ({
+// Mock @hello-pangea/dnd
+jest.mock('@hello-pangea/dnd', () => ({
   DragDropContext: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Droppable: ({ children }: { children: Function }) => children({
     innerRef: jest.fn(),

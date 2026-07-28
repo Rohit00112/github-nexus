@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useGitHub } from "../../context/GitHubContext";
 
 interface ReviewDetailsProps {
@@ -14,13 +13,13 @@ interface ReviewDetailsProps {
 interface PullRequest {
   number: number;
   title: string;
-  body: string;
+  body: string | null;
   html_url: string;
   state: string;
   user: {
     login: string;
     avatar_url: string;
-  };
+  } | null;
   created_at: string;
   updated_at: string;
   head: {
@@ -30,7 +29,7 @@ interface PullRequest {
   base: {
     ref: string;
   };
-  mergeable: boolean;
+  mergeable: boolean | null;
   mergeable_state: string;
   draft: boolean;
 }
@@ -40,11 +39,11 @@ interface Review {
   user: {
     login: string;
     avatar_url: string;
-  };
-  body: string;
+  } | null;
+  body: string | null;
   state: string;
-  submitted_at: string;
-  commit_id: string;
+  submitted_at?: string | null | undefined;
+  commit_id: string | null | undefined;
 }
 
 interface ReviewComment {
@@ -52,12 +51,12 @@ interface ReviewComment {
   user: {
     login: string;
     avatar_url: string;
-  };
-  body: string;
+  } | null;
+  body: string | null;
   created_at: string;
   path: string;
-  position: number;
-  line: number;
+  position: number | null;
+  line: number | null;
   commit_id: string;
 }
 
@@ -74,7 +73,7 @@ export default function ReviewDetails({ owner, repo, pullNumber }: ReviewDetails
   const { githubService } = useGitHub();
   const [pullRequest, setPullRequest] = useState<PullRequest | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewComments, setReviewComments] = useState<ReviewComment[]>([]);
+  const [, setReviewComments] = useState<ReviewComment[]>([]);
   const [files, setFiles] = useState<PullRequestFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,9 +97,9 @@ export default function ReviewDetails({ owner, repo, pullNumber }: ReviewDetails
           githubService.getPullRequestFiles(owner, repo, pullNumber),
         ]);
         
-        setPullRequest(prData);
-        setReviews(reviewsData);
-        setReviewComments(commentsData);
+        setPullRequest(prData as PullRequest);
+        setReviews(reviewsData as unknown as Review[]);
+        setReviewComments(commentsData as ReviewComment[]);
         setFiles(filesData);
       } catch (err) {
         console.error("Error fetching pull request details:", err);
@@ -236,14 +235,16 @@ export default function ReviewDetails({ owner, repo, pullNumber }: ReviewDetails
               </span>
               <span className="mx-2">•</span>
               <span>
-                <Image
-                  src={pullRequest.user.avatar_url}
-                  alt={pullRequest.user.login}
-                  width={20}
-                  height={20}
-                  className="inline-block rounded-full mr-1"
-                />
-                {pullRequest.user.login} created this pull request on {formatDate(pullRequest.created_at)}
+                {pullRequest.user && (
+                  <Image
+                    src={pullRequest.user.avatar_url}
+                    alt={pullRequest.user.login}
+                    width={20}
+                    height={20}
+                    className="inline-block rounded-full mr-1"
+                  />
+                )}
+                {pullRequest.user?.login ?? 'Unknown'} created this pull request on {formatDate(pullRequest.created_at)}
               </span>
             </div>
           </div>
@@ -380,21 +381,23 @@ export default function ReviewDetails({ owner, repo, pullNumber }: ReviewDetails
               return (
                 <div key={review.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <div className="flex items-start">
-                    <Image
-                      src={review.user.avatar_url}
-                      alt={review.user.login}
-                      width={40}
-                      height={40}
-                      className="rounded-full mr-3"
-                    />
+                    {review.user && (
+                      <Image
+                        src={review.user.avatar_url}
+                        alt={review.user.login}
+                        width={40}
+                        height={40}
+                        className="rounded-full mr-3"
+                      />
+                    )}
                     <div className="flex-1">
                       <div className="flex items-center">
-                        <span className="font-medium">{review.user.login}</span>
+                        <span className="font-medium">{review.user?.login ?? 'Unknown'}</span>
                         <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}>
                           {label}
                         </span>
                         <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                          {formatDate(review.submitted_at)}
+                          {review.submitted_at ? formatDate(review.submitted_at) : 'Unknown'}
                         </span>
                       </div>
                       

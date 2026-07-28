@@ -5,7 +5,6 @@ import { useGitHub } from "../../context/GitHubContext";
 import {
   Card,
   CardBody,
-  CardHeader,
   Button,
   Spinner,
   Chip,
@@ -303,6 +302,7 @@ export default function WorkflowRuns({ owner, repo, workflowId, workflowName }: 
                       </DropdownTrigger>
                       <DropdownMenu aria-label="Run actions">
                         <DropdownItem
+                          key="view-run"
                           as="a"
                           href={run.url}
                           target="_blank"
@@ -311,6 +311,7 @@ export default function WorkflowRuns({ owner, repo, workflowId, workflowName }: 
                           View on GitHub
                         </DropdownItem>
                         <DropdownItem
+                          key="view-commit"
                           as="a"
                           href={`https://github.com/${owner}/${repo}/commit/${run.headBranch}`}
                           target="_blank"
@@ -335,7 +336,7 @@ export default function WorkflowRuns({ owner, repo, workflowId, workflowName }: 
               </svg>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No workflow runs found</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                This workflow hasn't been run yet.
+                This workflow hasn&apos;t been run yet.
               </p>
               <Button
                 color="primary"

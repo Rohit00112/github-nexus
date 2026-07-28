@@ -25,8 +25,7 @@ import {
 import { 
   PencilIcon, 
   TrashIcon, 
-  InformationCircleIcon,
-  PlayIcon
+  InformationCircleIcon
 } from "@heroicons/react/24/outline";
 import RuleDetails from "./RuleDetails";
 
@@ -92,7 +91,7 @@ export default function RuleList({ onEdit }: RuleListProps) {
         <InformationCircleIcon className="h-12 w-12 mx-auto text-gray-400" />
         <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">No automation rules</h3>
         <p className="mt-1 text-gray-500 dark:text-gray-400">
-          You haven't created any automation rules yet. Create your first rule to automate your GitHub workflow.
+          You haven&apos;t created any automation rules yet. Create your first rule to automate your GitHub workflow.
         </p>
       </div>
     );
@@ -210,7 +209,7 @@ export default function RuleList({ onEdit }: RuleListProps) {
                 Confirm Deletion
               </ModalHeader>
               <ModalBody>
-                <p>Are you sure you want to delete the rule "{deleteConfirmRule?.name}"?</p>
+                <p>Are you sure you want to delete the rule &quot;{deleteConfirmRule?.name}&quot;?</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone.</p>
               </ModalBody>
               <ModalFooter>

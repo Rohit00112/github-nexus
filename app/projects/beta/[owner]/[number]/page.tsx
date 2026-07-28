@@ -10,7 +10,6 @@ import {
   Button,
   Card,
   CardBody,
-  CardHeader,
   Chip,
   Spinner,
   Tabs,
@@ -18,17 +17,21 @@ import {
   Textarea,
   Input
 } from "@nextui-org/react";
-import { PencilIcon, TrashIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import type {
+  ProjectBeta,
+  ProjectBetaItem,
+} from "../../../../services/github/githubService";
 
 export default function ProjectBetaDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  const _router = useRouter();
   const owner = params.owner as string;
   const number = parseInt(params.number as string, 10);
 
   const { githubService } = useGitHub();
-  const [project, setProject] = useState<any | null>(null);
-  const [projectItems, setProjectItems] = useState<any[]>([]);
+  const [project, setProject] = useState<ProjectBeta | null>(null);
+  const [projectItems, setProjectItems] = useState<ProjectBetaItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -316,7 +319,7 @@ export default function ProjectBetaDetailPage() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Project Fields</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {project.fields.nodes.map((field: any) => (
+                      {project.fields.nodes.map((field) => (
                         <Card key={field.id} shadow="sm">
                           <CardBody className="p-4">
                             <div className="flex justify-between items-center">
@@ -331,7 +334,7 @@ export default function ProjectBetaDetailPage() {
                               <div className="mt-2">
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Options:</p>
                                 <div className="flex flex-wrap gap-1">
-                                  {field.options.map((option: any) => (
+                                  {field.options.map((option) => (
                                     <Chip
                                       key={option.id}
                                       size="sm"
@@ -360,7 +363,7 @@ export default function ProjectBetaDetailPage() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Project Views</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {project.views.nodes.map((view: any) => (
+                       {project.views.nodes.map((view) => (
                         <Card key={view.id} shadow="sm">
                           <CardBody className="p-4">
                             <div className="flex justify-between items-center">

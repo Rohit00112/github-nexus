@@ -14,7 +14,7 @@ interface RepositoryStats {
   watchers: number;
   openIssues: number;
   size: number;
-  language: string;
+  language: string | null;
   createdAt: string;
   updatedAt: string;
   pushedAt: string;

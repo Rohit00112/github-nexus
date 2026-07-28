@@ -1,10 +1,9 @@
 "use client";
 
-import { FC, useState, useRef, useEffect } from 'react';
+import { FC, useCallback, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useNotifications } from '../../context/NotificationsContext';
-import LoadingSpinner from '../ui/LoadingSpinner';
+import { GitHubNotification } from '../../types/github';
 import {
   Popover,
   PopoverTrigger,
@@ -104,7 +103,7 @@ const NotificationBell: FC<NotificationBellProps> = ({ className = "" }) => {
   };
 
   // Get notification URL
-  const getNotificationUrl = (notification: any) => {
+  const getNotificationUrl = (notification: GitHubNotification) => {
     if (notification.subject.url) {
       // Extract the path from the API URL
       const urlParts = notification.subject.url.split('/');
@@ -122,27 +121,27 @@ const NotificationBell: FC<NotificationBellProps> = ({ className = "" }) => {
   };
 
   // Handle notification click
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: GitHubNotification) => {
     markAsRead(notification.thread_id);
     setIsOpen(false);
   };
 
   // Handle manual refresh
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setLocalLoading(true);
     try {
       await fetchNotifications({ all: true });
     } finally {
       setLocalLoading(false);
     }
-  };
+  }, [fetchNotifications]);
 
   // Effect to handle dropdown open
   useEffect(() => {
     if (isOpen) {
       handleRefresh();
     }
-  }, [isOpen]);
+  }, [isOpen, handleRefresh]);
 
   return (
     <Popover

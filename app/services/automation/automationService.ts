@@ -12,15 +12,25 @@ import {
   AutomationResourceType
 } from "@/app/types/automation";
 import { v4 as uuidv4 } from 'uuid';
+import { GitHubService } from "../github/githubService";
+
+interface AutomationResource {
+  number: number;
+  title: string;
+  body?: string | null;
+  labels: Array<{ name?: string } | string>;
+  user: { login: string } | null;
+  assignees?: Array<{ login: string }> | null;
+}
 
 /**
  * Service for managing and executing automation rules
  */
 export class AutomationService {
   private rules: AutomationRule[] = [];
-  private githubService: any;
+  private githubService: GitHubService;
 
-  constructor(githubService: any) {
+  constructor(githubService: GitHubService) {
     this.githubService = githubService;
     this.loadRules();
   }
@@ -229,7 +239,7 @@ export class AutomationService {
   /**
    * Execute a single rule against an issue or pull request
    */
-  private async executeRule(rule: AutomationRule, resource: any, owner: string, repo: string): Promise<RuleExecutionResult> {
+  private async executeRule(rule: AutomationRule, resource: AutomationResource, owner: string, repo: string): Promise<RuleExecutionResult> {
     const result: RuleExecutionResult = {
       ruleId: rule.id,
       ruleName: rule.name,
@@ -294,7 +304,7 @@ export class AutomationService {
   /**
    * Test a rule against a resource without executing actions
    */
-  private testRule(rule: AutomationRule, resource: any): RuleExecutionResult {
+  private testRule(rule: AutomationRule, resource: AutomationResource): RuleExecutionResult {
     const result: RuleExecutionResult = {
       ruleId: rule.id,
       ruleName: rule.name,
@@ -325,7 +335,7 @@ export class AutomationService {
   /**
    * Evaluate a condition group against a resource
    */
-  private evaluateConditionGroup(group: ConditionGroup, resource: any): boolean {
+  private evaluateConditionGroup(group: ConditionGroup, resource: AutomationResource): boolean {
     if (group.operator === ConditionOperator.AND) {
       // All conditions must be true
       return group.conditions.every(condition => {
@@ -354,7 +364,7 @@ export class AutomationService {
   /**
    * Evaluate a single condition against a resource
    */
-  private evaluateCondition(condition: Condition, resource: any): boolean {
+  private evaluateCondition(condition: Condition, resource: AutomationResource): boolean {
     let result = false;
 
     switch (condition.type) {
@@ -371,17 +381,17 @@ export class AutomationService {
         result = resource.body ? new RegExp(condition.pattern, condition.flags).test(resource.body) : false;
         break;
       case ConditionType.HAS_LABEL:
-        result = resource.labels.some((label: any) => label.name === condition.label);
+        result = resource.labels.some((label) => (typeof label === 'string' ? label : label.name ?? '') === condition.label);
         break;
       case ConditionType.CREATED_BY:
-        result = resource.user.login === condition.username;
+        result = resource.user?.login === condition.username;
         break;
       case ConditionType.ASSIGNED_TO:
-        result = resource.assignees.some((assignee: any) => assignee.login === condition.username);
+        result = resource.assignees?.some((assignee) => assignee.login === condition.username) ?? false;
         break;
       // Add more condition evaluations as needed
       default:
-        console.warn(`Unsupported condition type: ${condition.type}`);
+        console.warn(`Unsupported condition type: ${(condition as unknown as Record<string, unknown>).type}`);
         result = false;
     }
 
@@ -392,7 +402,7 @@ export class AutomationService {
   /**
    * Execute an action on a resource
    */
-  private async executeAction(action: Action, resource: any, owner: string, repo: string): Promise<void> {
+  private async executeAction(action: Action, resource: AutomationResource, owner: string, repo: string): Promise<void> {
     const issueNumber = resource.number;
 
     switch (action.type) {

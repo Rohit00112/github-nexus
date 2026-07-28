@@ -5,7 +5,6 @@ import { useGitHub } from "../../context/GitHubContext";
 import {
   Card,
   CardBody,
-  CardHeader,
   Button,
   Spinner,
   Chip,
@@ -23,8 +22,6 @@ import {
 } from "@nextui-org/react";
 import { 
   PlayIcon, 
-  PauseIcon, 
-  ArrowPathIcon, 
   EllipsisVerticalIcon,
   DocumentTextIcon,
   ClockIcon
@@ -203,6 +200,7 @@ export default function WorkflowList({ owner, repo }: WorkflowListProps) {
                       </DropdownTrigger>
                       <DropdownMenu aria-label="Workflow actions">
                         <DropdownItem
+                          key="view"
                           as="a"
                           href={workflow.url}
                           target="_blank"
@@ -211,6 +209,7 @@ export default function WorkflowList({ owner, repo }: WorkflowListProps) {
                           View on GitHub
                         </DropdownItem>
                         <DropdownItem
+                          key="edit"
                           as="a"
                           href={`https://github.com/${owner}/${repo}/edit/${workflow.path}`}
                           target="_blank"
@@ -235,7 +234,7 @@ export default function WorkflowList({ owner, repo }: WorkflowListProps) {
               </svg>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No workflows found</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                This repository doesn't have any GitHub Actions workflows yet.
+                This repository doesn&apos;t have any GitHub Actions workflows yet.
               </p>
               <Button
                 as="a"

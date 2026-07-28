@@ -1,16 +1,16 @@
 "use client";
 
 import { FC, useState, useEffect } from 'react';
-import { Card, CardBody, Button, Switch, Divider, Input } from '@nextui-org/react';
+import { Card, CardBody, Button, Switch, Divider } from '@nextui-org/react';
 import { useAuth } from '../../hooks/useAuth';
 import Link from 'next/link';
 
 const SecuritySettings: FC = () => {
-  const { session, signOut } = useAuth();
+  const { signOut } = useAuth();
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState('30');
   const [showSensitiveData, setShowSensitiveData] = useState(true);
-  const [activityLog, setActivityLog] = useState<string[]>([
+  const [activityLog] = useState<string[]>([
     'Signed in from Chrome on macOS - 2 hours ago',
     'Changed notification settings - Yesterday',
     'Connected Slack integration - 3 days ago',

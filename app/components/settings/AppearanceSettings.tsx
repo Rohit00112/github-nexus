@@ -2,7 +2,7 @@
 
 import { FC, useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { Radio, RadioGroup, Card, CardBody, Button, Divider, Switch } from '@nextui-org/react';
+import { Radio, RadioGroup, Card, CardBody, Divider, Switch } from '@nextui-org/react';
 
 const AppearanceSettings: FC = () => {
   const { theme, setTheme } = useTheme();

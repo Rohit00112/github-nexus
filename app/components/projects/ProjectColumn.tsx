@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useGitHub } from "../../context/GitHubContext";
-import { Draggable } from "react-beautiful-dnd";
-import ProjectCard from "./ProjectCard";
+import Image from "next/image";
+import { Draggable } from "@hello-pangea/dnd";
 import LinkItemModal from "./LinkItemModal";
 
 interface ProjectColumnProps {
@@ -41,7 +41,7 @@ export default function ProjectColumn({
   onUpdateColumn,
   onAddCard,
   onDeleteCard,
-  onMoveCard,
+  onMoveCard: _onMoveCard,
   isDraggable = false,
 }: ProjectColumnProps) {
   const { githubService } = useGitHub();
@@ -214,7 +214,7 @@ export default function ProjectColumn({
                       </div>
                       {card.creator && (
                         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                          <img src={card.creator.avatar_url} alt={card.creator.login} className="w-4 h-4 rounded-full mr-1" />
+                          <Image src={card.creator.avatar_url} alt={card.creator.login} className="w-4 h-4 rounded-full mr-1" unoptimized width={16} height={16} />
                           <span>{card.creator.login}</span>
                         </div>
                       )}
@@ -239,7 +239,7 @@ export default function ProjectColumn({
                   </div>
                   {card.creator && (
                     <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                      <img src={card.creator.avatar_url} alt={card.creator.login} className="w-4 h-4 rounded-full mr-1" />
+                      <Image src={card.creator.avatar_url} alt={card.creator.login} className="w-4 h-4 rounded-full mr-1" unoptimized width={16} height={16} />
                       <span>{card.creator.login}</span>
                     </div>
                   )}

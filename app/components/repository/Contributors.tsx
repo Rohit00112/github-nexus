@@ -2,7 +2,6 @@
 
 import { FC, useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useGitHub } from '../../context/GitHubContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
 

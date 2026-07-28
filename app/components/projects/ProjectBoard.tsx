@@ -1,16 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, DropResult } from "@hello-pangea/dnd";
 import { useGitHub } from "../../context/GitHubContext";
 import ProjectColumn from "./ProjectColumn";
 import CreateColumnModal from "./CreateColumnModal";
+import type { ClassicProjectColumn } from "../../services/github/githubService";
+
+interface ProjectCard {
+  id: number;
+  note: string;
+  created_at: string;
+  updated_at: string;
+  column_url: string;
+  content_url?: string;
+  creator?: {
+    login: string;
+    avatar_url: string;
+  };
+}
 
 interface ProjectBoardProps {
   projectId: number;
-  initialColumns: any[];
-  initialCards: Record<number, any[]>;
-  onColumnCreated: (column: any) => void;
+  initialColumns: ClassicProjectColumn[];
+  initialCards: Record<number, ProjectCard[]>;
+  onColumnCreated: (column: ClassicProjectColumn) => void;
   onColumnDeleted: (columnId: number) => void;
   onColumnUpdated: (columnId: number, name: string) => void;
 }
@@ -24,8 +38,8 @@ export default function ProjectBoard({
   onColumnUpdated,
 }: ProjectBoardProps) {
   const { githubService } = useGitHub();
-  const [columns, setColumns] = useState<any[]>(initialColumns);
-  const [cards, setCards] = useState<Record<number, any[]>>(initialCards);
+  const [columns, setColumns] = useState<ClassicProjectColumn[]>(initialColumns);
+  const [cards, setCards] = useState<Record<number, ProjectCard[]>>(initialCards);
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateColumnModal, setShowCreateColumnModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +131,7 @@ export default function ProjectBoard({
       setIsLoading(true);
       
       // Refresh cards for the column
-      const columnCards = await githubService.getColumnCards(columnId);
+      const columnCards = await githubService.getColumnCards(columnId) as unknown as ProjectCard[];
       
       // Update local state
       setCards({

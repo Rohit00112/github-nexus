@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useGitHub } from "../../context/GitHubContext";
+import Image from "next/image";
 
 interface ProjectCardProps {
   project: {
@@ -111,7 +112,7 @@ export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-2">
           {project.creator && (
             <>
-              <img src={project.creator.avatar_url} alt={project.creator.login} className="w-5 h-5 rounded-full mr-2" />
+              <Image src={project.creator.avatar_url} alt={project.creator.login} className="w-5 h-5 rounded-full mr-2" unoptimized width={20} height={20} />
               <span>{project.creator.login}</span>
               <span className="mx-2">•</span>
             </>

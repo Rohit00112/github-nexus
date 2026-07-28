@@ -46,7 +46,7 @@ export default function CodeFrequencyChart({ owner, repo }: CodeFrequencyChartPr
         setError(null);
         
         const data = await githubService.getCodeFrequency(owner, repo);
-        setCodeFrequency(data);
+        setCodeFrequency(data as CodeFrequencyData);
       } catch (err) {
         console.error("Error fetching code frequency:", err);
         setError("Failed to load code frequency data. Please try again later.");
@@ -125,10 +125,10 @@ export default function CodeFrequencyChart({ owner, repo }: CodeFrequencyChartPr
       },
       tooltip: {
         callbacks: {
-          title: function(tooltipItems: any) {
+          title: function(tooltipItems: Array<{ label?: string | number }>) {
             return `Week of ${tooltipItems[0].label}`;
           },
-          label: function(context: any) {
+          label: function(context: { dataset: { label?: string }; parsed: { y: number } }) {
             const datasetLabel = context.dataset.label;
             const value = context.parsed.y;
             if (datasetLabel === "Deletions") {

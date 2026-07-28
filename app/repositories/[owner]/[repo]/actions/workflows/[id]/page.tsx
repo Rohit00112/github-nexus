@@ -4,17 +4,17 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useGitHub } from "../../../../../../context/GitHubContext";
+import type { GitHubWorkflow } from "../../../../../../services/github/githubService";
 import MainLayout from "../../../../../../components/layout/MainLayout";
 import WorkflowRuns from "../../../../../../components/actions/WorkflowRuns";
 import {
   Card,
   CardBody,
-  CardHeader,
   Button,
   Spinner,
   Chip
 } from "@nextui-org/react";
-import { ArrowLeftIcon, PlayIcon } from "@heroicons/react/24/outline";
+import { PlayIcon } from "@heroicons/react/24/outline";
 
 export default function WorkflowDetailPage() {
   const params = useParams();
@@ -23,7 +23,7 @@ export default function WorkflowDetailPage() {
   const workflowId = params.id as string;
 
   const { githubService } = useGitHub();
-  const [workflow, setWorkflow] = useState<any | null>(null);
+  const [workflow, setWorkflow] = useState<GitHubWorkflow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +37,7 @@ export default function WorkflowDetailPage() {
         
         // Fetch all workflows and find the one with matching ID
         const workflows = await githubService.getRepositoryWorkflows(owner, repo);
-        const matchingWorkflow = workflows.find((wf: any) => wf.id === workflowId);
+        const matchingWorkflow = workflows.find((wf) => wf.id === workflowId);
         
         if (matchingWorkflow) {
           setWorkflow(matchingWorkflow);

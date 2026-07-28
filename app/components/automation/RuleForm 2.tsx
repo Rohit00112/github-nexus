@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAutomation } from "../../context/AutomationContext";
-import { 
-  AutomationRule, 
+import {
   AutomationResourceType, 
   ConditionGroup, 
   ConditionOperator, 
@@ -21,8 +20,7 @@ import {
   Switch, 
   Card, 
   CardBody,
-  Divider,
-  Chip
+  Divider
 } from "@nextui-org/react";
 import { PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
 import ConditionEditor from "./ConditionEditor";

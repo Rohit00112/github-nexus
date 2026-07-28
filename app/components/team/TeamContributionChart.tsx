@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
   ArcElement,
+  TooltipItem,
 } from "chart.js";
 import { Bar, Pie } from "react-chartjs-2";
 import { useGitHub } from "../../context/GitHubContext";
@@ -238,10 +239,10 @@ export default function TeamContributionChart({
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<"pie">) {
             const label = context.label || "";
-            const value = context.raw || 0;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const value = Number(context.raw) || 0;
+            const total = context.dataset.data.reduce((sum, item) => sum + Number(item), 0);
             const percentage = Math.round((value / total) * 100);
             return `${label}: ${value} (${percentage}%)`;
           }

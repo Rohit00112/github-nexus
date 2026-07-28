@@ -1,7 +1,6 @@
 "use client";
 
 import { FC, useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useGitHub } from '../../context/GitHubContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
@@ -102,6 +101,7 @@ const FileExplorer: FC<FileExplorerProps> = ({
     }
     
     fetchBranches();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [githubService, owner, repo]);
 
   // Handle file click

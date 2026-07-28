@@ -9,11 +9,8 @@ import WorkflowRunDetail from "../../../../../../components/actions/WorkflowRunD
 import {
   Card,
   CardBody,
-  CardHeader,
-  Button,
   Spinner
 } from "@nextui-org/react";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 export default function WorkflowRunDetailPage() {
   const params = useParams();

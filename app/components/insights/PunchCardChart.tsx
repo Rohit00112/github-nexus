@@ -26,7 +26,7 @@ export default function PunchCardChart({ owner, repo }: PunchCardChartProps) {
         setError(null);
         
         const data = await githubService.getPunchCard(owner, repo);
-        setPunchCard(data);
+        setPunchCard(data as PunchCardData);
       } catch (err) {
         console.error("Error fetching punch card data:", err);
         setError("Failed to load commit time distribution data. Please try again later.");

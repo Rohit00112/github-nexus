@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useGitHub } from "../../context/GitHubContext";
+import type { GitHubService } from "../../services/github/githubService";
+import Image from "next/image";
 import {
   Modal,
   ModalContent,
@@ -25,6 +27,8 @@ interface LinkItemModalProps {
   onItemLinked: (columnId: number) => void;
 }
 
+type SearchItem = Awaited<ReturnType<GitHubService["searchIssues"]>>[number];
+
 export default function LinkItemModal({
   isOpen,
   onClose,
@@ -34,9 +38,9 @@ export default function LinkItemModal({
   const { githubService } = useGitHub();
   const [activeTab, setActiveTab] = useState("issues");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
-  const [repositories, setRepositories] = useState<any[]>([]);
+  const [repositories, setRepositories] = useState<Array<{ id: number; name: string; full_name: string; owner: { login: string } }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,10 +81,10 @@ export default function LinkItemModal({
       
       if (activeTab === "issues") {
         const issues = await githubService.searchIssues(searchQuery, owner, repo);
-        setSearchResults(issues.filter((issue: any) => !issue.pull_request));
+        setSearchResults(issues.filter((issue) => !issue.pull_request));
       } else {
         const pullRequests = await githubService.searchIssues(searchQuery, owner, repo);
-        setSearchResults(pullRequests.filter((issue: any) => issue.pull_request));
+        setSearchResults(pullRequests.filter((issue) => issue.pull_request));
       }
     } catch (error) {
       console.error("Error searching items:", error);
@@ -91,7 +95,7 @@ export default function LinkItemModal({
   };
 
   // Handle item selection
-  const handleLinkItem = async (item: any) => {
+  const handleLinkItem = async (item: SearchItem) => {
     if (!githubService) return;
     
     try {
@@ -199,13 +203,15 @@ export default function LinkItemModal({
                                 </div>
                                 <h4 className="text-sm font-medium">{item.title}</h4>
                                 <div className="flex flex-wrap gap-1 mt-2">
-                                  {item.labels.map((label: any) => (
+                                  {item.labels.map((label) => typeof label === "string" ? (
+                                    <Chip key={label} size="sm">{label}</Chip>
+                                  ) : (
                                     <Chip
-                                      key={label.id}
+                                      key={label.id ?? label.name}
                                       size="sm"
                                       style={{
-                                        backgroundColor: `#${label.color}`,
-                                        color: parseInt(label.color, 16) > 0xffffff / 2 ? '#000' : '#fff'
+                                        backgroundColor: label.color ? `#${label.color}` : undefined,
+                                        color: label.color && parseInt(label.color, 16) > 0xffffff / 2 ? '#000' : '#fff'
                                       }}
                                     >
                                       {label.name}
@@ -213,13 +219,16 @@ export default function LinkItemModal({
                                   ))}
                                 </div>
                               </div>
-                              <div className="ml-2">
-                                <img
+                              {item.user && <div className="ml-2">
+                                <Image
                                   src={item.user.avatar_url}
                                   alt={item.user.login}
                                   className="w-6 h-6 rounded-full"
+                                  unoptimized
+                                  width={24}
+                                  height={24}
                                 />
-                              </div>
+                              </div>}
                             </div>
                           </CardBody>
                         </Card>

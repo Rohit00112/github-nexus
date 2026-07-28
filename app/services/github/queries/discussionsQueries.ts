@@ -27,8 +27,10 @@ export const GET_REPOSITORY_DISCUSSIONS = `
           category {
             id
             name
+            slug
             emoji
             description
+            isAnswerable
           }
           comments(first: 0) {
             totalCount
@@ -71,8 +73,10 @@ export const GET_DISCUSSION = `
         category {
           id
           name
+          slug
           emoji
           description
+          isAnswerable
         }
         labels(first: 10) {
           nodes {

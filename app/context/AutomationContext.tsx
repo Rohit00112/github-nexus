@@ -105,7 +105,7 @@ export function AutomationProvider({ children }: AutomationProviderProps) {
     }
 
     // Get the current user's login
-    const { data: user } = await githubService.octokit.rest.users.getAuthenticated();
+    const { data: user } = await githubService!.octokit.rest.users.getAuthenticated();
 
     const newRule = automationService.createRule({
       ...rule,

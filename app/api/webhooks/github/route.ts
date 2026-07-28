@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AutomationService } from '@/app/services/automation/automationService';
 import { GitHubService } from '@/app/services/github/githubService';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/app/lib/authOptions';
 import crypto from 'crypto';
 
 // Verify GitHub webhook signature
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function processGitHubEvent(event: string | null, payload: any) {
+async function processGitHubEvent(event: string | null, payload: Record<string, unknown>) {
   if (!event) return;
   
   // Get a session to use for authentication
@@ -80,8 +80,10 @@ async function processGitHubEvent(event: string | null, payload: any) {
   }
 }
 
-async function processIssueEvent(automationService: AutomationService, payload: any) {
-  const { action, issue, repository } = payload;
+async function processIssueEvent(automationService: AutomationService, payload: Record<string, unknown>) {
+  const action = payload.action as string;
+  const issue = payload.issue as { number: number };
+  const repository = payload.repository as { full_name: string };
   console.log(`Processing issue event: ${action} for issue #${issue.number} in ${repository.full_name}`);
   
   // Execute automation rules for this issue
@@ -89,8 +91,10 @@ async function processIssueEvent(automationService: AutomationService, payload: 
   await automationService.executeRulesForIssue(owner, repo, issue.number);
 }
 
-async function processPullRequestEvent(automationService: AutomationService, payload: any) {
-  const { action, pull_request, repository } = payload;
+async function processPullRequestEvent(automationService: AutomationService, payload: Record<string, unknown>) {
+  const action = payload.action as string;
+  const pull_request = payload.pull_request as { number: number };
+  const repository = payload.repository as { full_name: string };
   console.log(`Processing pull request event: ${action} for PR #${pull_request.number} in ${repository.full_name}`);
   
   // Execute automation rules for this pull request
@@ -98,8 +102,10 @@ async function processPullRequestEvent(automationService: AutomationService, pay
   await automationService.executeRulesForPullRequest(owner, repo, pull_request.number);
 }
 
-async function processIssueCommentEvent(automationService: AutomationService, payload: any) {
-  const { action, comment, issue, repository } = payload;
+async function processIssueCommentEvent(automationService: AutomationService, payload: Record<string, unknown>) {
+  const action = payload.action as string;
+  const issue = payload.issue as { number: number };
+  const repository = payload.repository as { full_name: string };
   console.log(`Processing issue comment event: ${action} for issue #${issue.number} in ${repository.full_name}`);
   
   // Execute automation rules for this issue
@@ -107,8 +113,10 @@ async function processIssueCommentEvent(automationService: AutomationService, pa
   await automationService.executeRulesForIssue(owner, repo, issue.number);
 }
 
-async function processPullRequestReviewEvent(automationService: AutomationService, payload: any) {
-  const { action, review, pull_request, repository } = payload;
+async function processPullRequestReviewEvent(automationService: AutomationService, payload: Record<string, unknown>) {
+  const action = payload.action as string;
+  const pull_request = payload.pull_request as { number: number };
+  const repository = payload.repository as { full_name: string };
   console.log(`Processing pull request review event: ${action} for PR #${pull_request.number} in ${repository.full_name}`);
   
   // Execute automation rules for this pull request

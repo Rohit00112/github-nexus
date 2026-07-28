@@ -13,7 +13,7 @@ interface Member {
   login: string;
   avatar_url: string;
   html_url: string;
-  name?: string;
+  name?: string | null;
   bio?: string;
   type: string;
 }

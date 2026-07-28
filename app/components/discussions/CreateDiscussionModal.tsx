@@ -15,6 +15,7 @@ import {
   SelectItem,
   Spinner
 } from "@nextui-org/react";
+import type { DiscussionCategory } from "../../services/github/githubService";
 
 interface CreateDiscussionModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ export default function CreateDiscussionModal({
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<DiscussionCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

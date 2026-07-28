@@ -4,7 +4,6 @@ import { FC, useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useGitHub } from '../../context/GitHubContext';
 import { Input, Button, Avatar, Divider } from '@nextui-org/react';
-import Image from 'next/image';
 
 const ProfileSettings: FC = () => {
   const { session } = useAuth();

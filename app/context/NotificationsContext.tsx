@@ -88,7 +88,7 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
       ]);
 
       // If we get here, the request succeeded
-      setNotifications(data);
+      setNotifications(data as GitHubNotification[]);
       setUnreadCount(data.filter(notification => notification.unread).length);
       setLastFetchTime(new Date());
     } catch (err) {

@@ -14,8 +14,7 @@ import {
   Chip, 
   Divider,
   Accordion,
-  AccordionItem,
-  Spinner
+  AccordionItem
 } from "@nextui-org/react";
 import { PlayIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 

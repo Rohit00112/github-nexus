@@ -20,13 +20,12 @@ import {
   ModalContent, 
   ModalHeader, 
   ModalBody, 
-  ModalFooter,
-  useDisclosure,
-  Chip
+  useDisclosure
 } from "@nextui-org/react";
 import { AutomationRule, AutomationResourceType } from "../../../../types/automation";
 import AutomationRuleCard from "../../../../components/automation/AutomationRuleCard";
 import AutomationRuleForm from "../../../../components/automation/AutomationRuleForm";
+import type { AutomationRule as FormAutomationRule } from "../../../../components/automation/AutomationRuleForm";
 
 export default function RepositoryAutomationPage() {
   const params = useParams();
@@ -43,7 +42,7 @@ export default function RepositoryAutomationPage() {
     deleteRule 
   } = useAutomation();
 
-  const [repository, setRepository] = useState<any>(null);
+  const [repository, setRepository] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("rules");
@@ -122,7 +121,7 @@ export default function RepositoryAutomationPage() {
     }
   };
 
-  const handleSaveRule = async (ruleData: any) => {
+  const handleSaveRule = async (ruleData: FormAutomationRule) => {
     try {
       const repoFullName = `${owner}/${repo}`;
       
@@ -131,15 +130,14 @@ export default function RepositoryAutomationPage() {
         await updateRule(editingRule.id, {
           ...ruleData,
           repositories: [repoFullName]
-        });
+        } as unknown as Partial<AutomationRule>);
       } else {
         // Create new rule
         await createRule({
           ...ruleData,
           resourceType: AutomationResourceType.BOTH, // Default to both issues and PRs
-          repositories: [repoFullName],
-          createdBy: "current-user" // This will be replaced by the actual user in the context
-        });
+          repositories: [repoFullName]
+        } as unknown as Omit<AutomationRule, "id" | "createdAt" | "updatedAt" | "createdBy">);
       }
       
       onClose();
@@ -215,8 +213,8 @@ export default function RepositoryAutomationPage() {
                         {repositoryRules.map((rule) => (
                           <AutomationRuleCard
                             key={rule.id}
-                            rule={rule}
-                            onEdit={handleEditRule}
+                            rule={rule as unknown as FormAutomationRule}
+                            onEdit={handleEditRule as unknown as (rule: FormAutomationRule) => void}
                             onDelete={handleDeleteRule}
                             onToggleActive={handleToggleRuleActive}
                           />
@@ -229,7 +227,7 @@ export default function RepositoryAutomationPage() {
                         </svg>
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Automation Rules</h3>
                         <p className="text-gray-500 dark:text-gray-400 mb-6">
-                          You haven't created any automation rules for this repository yet.
+                          You haven&apos;t created any automation rules for this repository yet.
                         </p>
                         <Button 
                           color="primary" 
@@ -278,7 +276,7 @@ export default function RepositoryAutomationPage() {
                     </ModalHeader>
                     <ModalBody>
                       <AutomationRuleForm
-                        initialRule={editingRule || undefined}
+                        initialRule={editingRule as unknown as FormAutomationRule | undefined}
                         onSave={handleSaveRule}
                         onCancel={onClose}
                       />
@@ -292,7 +290,7 @@ export default function RepositoryAutomationPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
             <h3 className="text-xl font-medium mb-2">Repository not found</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              The repository you're looking for doesn't exist or you don't have access to it.
+              The repository you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.
             </p>
             <Link
               href="/repositories"

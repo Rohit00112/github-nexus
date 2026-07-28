@@ -3,32 +3,30 @@
 import { useState, useEffect } from "react";
 import { useGitHub } from "../../context/GitHubContext";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Card,
   CardBody,
-  CardHeader,
   Button,
   Spinner,
   Chip,
   Pagination,
   Input,
   Select,
-  SelectItem,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem
+  SelectItem
 } from "@nextui-org/react";
 import {
   ChatBubbleLeftRightIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
   PlusIcon,
   CheckCircleIcon,
   ClockIcon,
-  UserCircleIcon,
-  ArrowPathIcon
+  UserCircleIcon
 } from "@heroicons/react/24/outline";
+import type {
+  DiscussionCategory,
+  RepositoryDiscussion,
+} from "../../services/github/githubService";
 
 interface DiscussionListProps {
   owner: string;
@@ -38,13 +36,13 @@ interface DiscussionListProps {
 
 export default function DiscussionList({ owner, repo, onCreateDiscussion }: DiscussionListProps) {
   const { githubService } = useGitHub();
-  const [discussions, setDiscussions] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [discussions, setDiscussions] = useState<RepositoryDiscussion[]>([]);
+  const [categories, setCategories] = useState<DiscussionCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [hasNextPage, setHasNextPage] = useState(false);
+  const [_hasNextPage, setHasNextPage] = useState(false);
   const [endCursor, setEndCursor] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -65,7 +63,7 @@ export default function DiscussionList({ owner, repo, onCreateDiscussion }: Disc
           owner, 
           repo, 
           itemsPerPage,
-          page > 1 ? endCursor : undefined
+          page > 1 ? endCursor ?? undefined : undefined
         );
         
         setDiscussions(discussionsData.nodes);
@@ -85,7 +83,7 @@ export default function DiscussionList({ owner, repo, onCreateDiscussion }: Disc
     }
     
     fetchDiscussions();
-  }, [githubService, owner, repo, page]);
+  }, [githubService, owner, repo, page, endCursor]);
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -196,8 +194,13 @@ export default function DiscussionList({ owner, repo, onCreateDiscussion }: Disc
             onChange={(e) => handleCategoryFilter(e.target.value)}
             className="w-40"
           >
-            <SelectItem key="all" value="all">All Categories</SelectItem>
-            {categories.map((category) => (
+            {[{
+              id: "all",
+              name: "All Categories",
+              emoji: "",
+              slug: "all",
+              isAnswerable: false,
+            }, ...categories].map((category) => (
               <SelectItem key={category.id} value={category.id}>
                 {category.emoji} {category.name}
               </SelectItem>
@@ -225,10 +228,13 @@ export default function DiscussionList({ owner, repo, onCreateDiscussion }: Disc
               <CardBody className="p-4">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
-                    <img
+                    <Image
                       src={discussion.author.avatarUrl}
                       alt={discussion.author.login}
                       className="w-10 h-10 rounded-full"
+                      unoptimized
+                      width={40}
+                      height={40}
                     />
                   </div>
                   <div className="flex-1 min-w-0">

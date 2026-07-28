@@ -12,21 +12,26 @@ import {
   DuplicateAction,
   MergeAction
 } from "@/app/types/automation";
+import { GitHubService } from "../github/githubService";
+
+interface AutomationResource {
+  number: number;
+}
 
 /**
  * Service for executing actions when rules match
  */
 export class RuleActionService {
-  private githubService: any;
+  private githubService: GitHubService;
 
-  constructor(githubService: any) {
+  constructor(githubService: GitHubService) {
     this.githubService = githubService;
   }
 
   /**
    * Execute an action on a resource
    */
-  async executeAction(action: Action, resource: any, owner: string, repo: string): Promise<void> {
+  async executeAction(action: Action, resource: AutomationResource, owner: string, repo: string): Promise<void> {
     const issueNumber = resource.number;
 
     switch (action.type) {
@@ -79,7 +84,7 @@ export class RuleActionService {
         await this.mergePullRequest(action as MergeAction, owner, repo, issueNumber);
         break;
       default:
-        throw new Error(`Unsupported action type: ${action.type}`);
+        throw new Error(`Unsupported action type: ${(action as Record<string, unknown>).type}`);
     }
   }
 
@@ -106,9 +111,9 @@ export class RuleActionService {
         issue_number: issueNumber,
         name: action.label,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Ignore 404 errors (label doesn't exist)
-      if (error.status !== 404) {
+      if (error && typeof error === 'object' && 'status' in error && (error as { status: number }).status !== 404) {
         throw error;
       }
     }
@@ -159,7 +164,7 @@ export class RuleActionService {
       repo,
       issue_number: issueNumber,
       state: 'closed',
-      state_reason: action.reason || 'completed',
+      state_reason: (action.reason || 'completed') as 'completed' | 'reopened' | 'not_planned',
     });
   }
 

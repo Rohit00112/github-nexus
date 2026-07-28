@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useGitHub } from '../../context/GitHubContext';
 import { Pagination, Spinner, Card, CardBody, Chip } from '@nextui-org/react';
 import { ActivityFilters } from './ActivityFilters';
+import type { GitHubUserEvent } from '../../services/github/githubService';
 
 interface EnhancedActivityTimelineProps {
   filters: ActivityFilters;
@@ -57,7 +58,7 @@ const EnhancedActivityTimeline: FC<EnhancedActivityTimelineProps> = ({
         
         // Transform events into activity format
         const transformedActivities = events
-          .filter((event: any) => {
+          .filter((event: GitHubUserEvent) => {
             // Filter relevant event types
             return [
               'PushEvent', 
@@ -72,7 +73,7 @@ const EnhancedActivityTimeline: FC<EnhancedActivityTimelineProps> = ({
               'CommitCommentEvent'
             ].includes(event.type);
           })
-          .map((event: any): ActivityEvent => {
+          .map((event: GitHubUserEvent): ActivityEvent => {
             let type: ActivityEvent['type'] = 'commit';
             let title = '';
             let description = '';
@@ -83,7 +84,7 @@ const EnhancedActivityTimeline: FC<EnhancedActivityTimelineProps> = ({
                 type = 'commit';
                 const commitCount = event.payload.commits?.length || 0;
                 title = `Pushed ${commitCount} commit${commitCount !== 1 ? 's' : ''} to ${event.repo.name}`;
-                description = event.payload.commits?.map((commit: any) => commit.message).join(', ') || '';
+                description = event.payload.commits?.map((commit: { message: string }) => commit.message).join(', ') || '';
                 url = `https://github.com/${event.repo.name}/commit/${event.payload.head}`;
                 break;
               
@@ -188,7 +189,7 @@ const EnhancedActivityTimeline: FC<EnhancedActivityTimelineProps> = ({
     // Filter by time range
     if (filters.timeRange) {
       const now = new Date();
-      let startDate = new Date();
+      const startDate = new Date();
       
       switch (filters.timeRange) {
         case 'today':
